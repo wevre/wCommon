@@ -24,12 +24,12 @@ function formatException($e) {
 	return "Exception {$e->getCode()}: {$e->getMessage()} (line: {$e->getline()} of {$e->getfile()})\n{$e->getTraceAsString()}\n";
 }
 
-function common_error_log($ident, $type, $msg, $excp=null) { error_log("[" . ( $ident ? $ident . '-' : '' ) . "$type] $msg"); if ($excp) { error_log(formatException($excp)); } }
+function w_error_log($ident, $type, $msg, $excp=null) { error_log("[" . suffixIfCe($ident, '-') . "$type] $msg"); if ($excp) { error_log(formatException($excp)); } }
 
 // -----------------------------
 //! confirming the subdomain and http or https
 
-function common_confirmServer($hostname, $https=false, $domain='www') {
+function w_confirmServer($hostname, $https=false, $domain='www') {
 	if ($https) {
 		if (!$_SERVER['HTTPS'] || 0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: https://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
 	} else {
@@ -110,9 +110,9 @@ function wrap($test, $item, $prefix, $suffix) { // wraps $item in $prefix and $s
 
 function wrapIfCe($item, $prefix, $suffix) { return wrap((bool)$item, $item, $prefix, $suffix); }
 
-function prefixIfCe($item, $pre=' ') { // prepends a string if the $item string exists // works well for concatenating a string and inserting a space only if an item exists
-	return ( $item ? $pre : '' ) . $item;
-}
+function prefixIfCe($item, $pre=' ') { return ( $item ? $pre : '' ) . $item; } // prepends a string if $item string exists
+
+function suffixIfCe($item, $suff=' ') { return $item . ( $item ? $suff : '' ); } // appends a string if $item exists
 
 function getURLPath($url=null) {
 	if (!$url) { $url = $_SERVER['REQUEST_URI']; }
@@ -200,7 +200,7 @@ function dcode($string, $addNoScript=true) { // scans for the presence of <!--en
 // ------------------------------
 //! bailout is used to redirect back to display pages, or back to edit pages if there are form errors
 
-function common_bailout($item=null, $action=null, $params=array(), $target=false) { // redirects back to display or edit pages // $params is an array of strings ("x=arg") that wil become additional URL parameters //NOTE: they are not keyed because we already have lots of utility functions for constructing parameters and breaking them up back into key and value is a nuisance // target can be 'true' if there is also an $item, in which case it will call $item->getFragment, otherwise pass in the fragment desired
+function w_bailout($item=null, $action=null, $params=array(), $target=false) { // redirects back to display or edit pages // $params is an array of strings ("x=arg") that wil become additional URL parameters //NOTE: they are not keyed because we already have lots of utility functions for constructing parameters and breaking them up back into key and value is a nuisance // target can be 'true' if there is also an $item, in which case it will call $item->getFragment, otherwise pass in the fragment desired
 	$base = 'Location: ' . getURLPath();
 	if ($target) { $fragment = '#' . ( $item ? $item->getFragment() : $target ); }
 	if ($action) {

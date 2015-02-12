@@ -13,6 +13,8 @@
 *
 */
 
+require_once 'wCommon/wStandard.php';
+
 // constants used to clean input
 define('NO_SPEC_CHARS', 'no-spec-chars');
 define('ENCODE_HTML', 'encode-html');
@@ -30,7 +32,7 @@ define('SKEY_FORM_VALUES', 'form-values');
 // -----------------------------
 //! error function for checksums
 
-function form_error_log($msg, $excp=null) { /*my_error_log('FORM', $msg, $excp);*/ } // error messages for admin stuff
+function form_error_log($msg, $excp=null) { /*w_error_log(null, 'FORM', $msg, $excp);*/ }
 
 //NOTE: avoid using hyphens in form names, it makes javascript harder to access things by name
 //NOTE: the id is set for elements using the supplied 'name', so keep those unique
@@ -38,7 +40,7 @@ function form_error_log($msg, $excp=null) { /*my_error_log('FORM', $msg, $excp);
 // -----------------------------
 // Class for creating edit forms
 
-class CommonFormBuilder {
+class wFormBuilder {
 
 	function __construct($action=null, $method='post') {
 		if (!$action) { $action = getURLPath(); }
@@ -263,7 +265,7 @@ class CommonFormBuilder {
 		do {
 			// error checking on the uploaded file
 			if (!$_FILES[$name]) { break; }
-			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { admin_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
+			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
 			if (!in_array($_FILES[$name]['type'], array('image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/pjpeg'))) { self::setSessionError($name, 'Upload a PNG, JPEG, or GIF file only'); break; }
 			return $_FILES[$name]['tmp_name'];
 		} while (0);
@@ -278,7 +280,7 @@ class CommonFormBuilder {
 		return null;
 	}
 
-} // end of FormBuilder definition
+} // end of wFormBuilder definition
 
 function showLineEndings($string) { form_error_log(str_replace(array("\r\n", "\n\r", "\r", ), array("CRLF\n", "LFCR\n", "CR\n", ), $string)); }
 

@@ -45,9 +45,9 @@ class Template extends HTML_Template_Sigma {
 } // end of Template definition
 
 // -----------------------------
-//! StandardTemplate includes convenient functions for common page elements
+//! wTemplate includes convenient functions for common page elements
 
-class CommonTemplate extends Template {
+class wTemplate extends Template {
 
 	function __construct($tfile, $tdir, $cdir=null) {
 		parent::__construct($tfile, $tdir, $cdir);
@@ -107,6 +107,6 @@ class CommonTemplate extends Template {
 		$_SESSION[SKEY_CONFIRM][] = $msg;
 	}
 
-} // end of CommonTemplate definition
+} // end of wTemplate definition
 
 ?>
