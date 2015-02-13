@@ -13,8 +13,6 @@
 *
 */
 
-require_once 'dStruct/dStruct.php';
-
 // -----------------------------
 //! errors, exceptions and error logs
 
