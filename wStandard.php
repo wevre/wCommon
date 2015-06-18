@@ -178,9 +178,9 @@ define('DCODE_CLOSE_TAG', '</encode-->');
 function dcode($string, $addNoScript=true) { // scans for the presence of <!--encode> ... </encode--> and obfuscates the text inside // note that the default <noscript> message uses class .bmatch
 	$open_tag = DCODE_OPEN_TAG;
 	$close_tag = DCODE_CLOSE_TAG;
-	while (false !== ($pos = stripos($string, $open_tag))) {
+	while (false !== ($pos = strpos($string, $open_tag))) {
 		// find the closing [/encode] and substitute all the text inbetween with scrambled text
-		if (false === ($close = stripos($string, $close_tag))) { break; }
+		if (false === ($close = strpos($string, $close_tag, $pos))) { break; }
 		$uppShift = mt_rand(3, 23);
 		$lowShift = mt_rand(3,23);
 		$numShift = mt_rand(2,8);
