@@ -211,7 +211,7 @@ function dcode($string, $addNoScript=true) { // Wrapper function to simplify the
 //
 
 // Sets the location and exits the PHP script in order to redirect the browser. The assumption is that the base URL is the same as the current URLPath, and the parameters needed to control the specific page are already present in the GET or POST request, and we just need to copy over the ones that are important. Those are specified by key with the -- wait for it -- $keys parameter. If a fragment is desired, you pass that in as an object to the $target parameter, and the `getFragment` function will be called on that object. The `others` parameter is a keyed array of additional URL parameters that are not in GET or POST.
-function new_bailout($keys=array(), $others=[], $target=null) {
+function w_bailout($keys=array(), $others=[], $target=null) {
 	if ($target) { $fragment = $target->getFragment(); }
 	header('Location: ' . getURLPath() . prefixIfCe(implode("&", array_map(function($k) { return "{$k}={$_REQUEST[$k]}"; }, array_filter($keys, function($k) { return $_REQUEST[$k]; }))), '?') . prefixIfCe(implode('&', array_map(function($k,$v) { return "{$k}={$v}"; }, array_keys($others), $others)), '&') . prefixIfCe($fragment, '#'));
 	exit;
