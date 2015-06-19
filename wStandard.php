@@ -191,33 +191,29 @@ function scanTag($string, $open_tag, $close_tag, $replacer) {
 define('DCODE_OPEN_TAG', '<!--encode>');
 define('DCODE_CLOSE_TAG', '</encode-->');
 
-function dcodeReplacer($shifted) {
-	$uppShift = mt_rand(3, 23);
-	$lowShift = mt_rand(3,23);
-	$numShift = mt_rand(2,8);
-	$shifted = preg_replace_callback('/[A-Z]/', function ($m) use ($uppShift) { return chr( (90>=($c=ord($m[0])+$uppShift)) ? $c : $c-26 ); }, $shifted);
-	$shifted = preg_replace_callback('/[a-z]/', function ($m) use ($lowShift) { return chr( (122>=($c=ord($m[0])+$lowShift)) ? $c : $c-26 ); }, $shifted);
-	$shifted = preg_replace_callback('/\d/', function ($m) use ($numShift) { return chr( (57>=($c=ord($m[0])+$numShift)) ? $c : $c-10 ); }, $shifted);
-	$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . '<!--' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[A-Z]/g,function(c){return String.fromCharCode(90>=(c=c.charCodeAt(0)+' . (26-$uppShift) . ')?c:c-26);}).replace(/[a-z]/g,function(c){return String.fromCharCode(122>=(c=c.charCodeAt(0)+' . (26-$lowShift) . ')?c:c-26);}).replace(/\d/g,function(c){return String.fromCharCode(57>=(c=c.charCodeAt(0)+' . (10-$numShift) . ')?c:c-10);}));' . PHP_EOL . '//-->' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
-	if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
-	return $coded;
-}
-
-function dcode($string, $addNoScript=true) { // Scans for the presence of <!--encode> ... </encode--> and obfuscates the text inside. Note that the default <noscript> message uses class .bmatch.
-	return scanTag($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, 'dcodeReplacer');
-}
-
-// ------------------------------
-//! bailout is used to redirect back to display pages, or back to edit pages if there are form errors
-
-function w_bailout($item=null, $action=null, $params=array(), $target=false) { // redirects back to display or edit pages // $params is an array of strings ("x=arg") that wil become additional URL parameters //NOTE: they are not keyed because we already have lots of utility functions for constructing parameters and breaking them up back into key and value is a nuisance // target can be 'true' if there is also an $item, in which case it will call $item->getFragment, otherwise pass in the fragment desired
-	$base = 'Location: ' . getURLPath();
-	if ($target) { $fragment = '#' . ( $item ? $item->getFragment() : $target ); }
-	if ($action) {
-		if ($item && $_REQUEST[KEY_IDEE]) { $params[] = $item->getIdeeLink(); } // don't include the KEY_IDEE param if it wasn't part of the original request (which means we were creating a new item)
-		$params[] = actionParam($action);
+function dcode($string, $addNoScript=true) { // Wrapper function to simplify the dcode call.
+	$replacer = function($shifted) {
+		$uppShift = mt_rand(3, 23);
+		$lowShift = mt_rand(3,23);
+		$numShift = mt_rand(2,8);
+		$shifted = preg_replace_callback('/[A-Z]/', function ($m) use ($uppShift) { return chr( (90>=($c=ord($m[0])+$uppShift)) ? $c : $c-26 ); }, $shifted);
+		$shifted = preg_replace_callback('/[a-z]/', function ($m) use ($lowShift) { return chr( (122>=($c=ord($m[0])+$lowShift)) ? $c : $c-26 ); }, $shifted);
+		$shifted = preg_replace_callback('/\d/', function ($m) use ($numShift) { return chr( (57>=($c=ord($m[0])+$numShift)) ? $c : $c-10 ); }, $shifted);
+		$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . '<!--' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[A-Z]/g,function(c){return String.fromCharCode(90>=(c=c.charCodeAt(0)+' . (26-$uppShift) . ')?c:c-26);}).replace(/[a-z]/g,function(c){return String.fromCharCode(122>=(c=c.charCodeAt(0)+' . (26-$lowShift) . ')?c:c-26);}).replace(/\d/g,function(c){return String.fromCharCode(57>=(c=c.charCodeAt(0)+' . (10-$numShift) . ')?c:c-10);}));' . PHP_EOL . '//-->' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
+		if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
+		return $coded;
 	}
-	header($base . ( $params ? '?' . implode("&", $params) : '' ) . $fragment);
+	return scanTag($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, $replacer);
+}
+
+//
+//! Redirects, in the typical case, from an edit page back to a display page, using parameters present in GET or POST to construct the redirect URL.
+//
+
+// Sets the location and exits the PHP script in order to redirect the browser. The assumption is that the base URL is the same as the current URLPath, and the parameters needed to control the specific page are already present in the GET or POST request, and we just need to copy over the ones that are important. Those are specified by key with the -- wait for it -- $keys parameter. If a fragment is desired, you pass that in as an object to the $target parameter, and the `getFragment` function will be called on that object. The `others` parameter is a keyed array of additional URL parameters that are not in GET or POST.
+function new_bailout($keys=array(), $others=[], $target=null) {
+	if ($target) { $fragment = $target->getFragment(); }
+	header('Location: ' . getURLPath() . prefixIfCe(implode("&", array_map(function($k) { return "{$k}={$_REQUEST[$k]}"; }, array_filter($keys, function($k) { return $_REQUEST[$k]; }))), '?') . prefixIfCe(implode('&', array_map(function($k,$v) { return "{$k}={$v}"; }, array_keys($others), $others)), '&') . prefixIfCe($fragment, '#'));
 	exit;
 }
 
