@@ -169,30 +169,42 @@ function listOfLinks($links) { // array of items such as: array('link'=>'', 'dis
 	return ( $string ? '<ul class="linklist">' . $string . '</ul>' : '' );
 }
 
-// -----------------------------
-//! encoding sensitive info
+//
+//! Generic function to replace sections delimited by custom tags.
+//
+
+function scanTag($string, $open_tag, $close_tag, $replacer) {
+	while (false !== ($pos = strpos($string, $open_tag))) {
+		// find the closing tag and process the text inbetween
+		if (false === ($close = strpos($string, $close_tag, $pos))) { break; }
+		$target = substr($string, $pos+strlen($open_tag), $close-($pos+strlen($open_tag)));
+		$tag = $replacer($target);
+		$string = substr_replace($string, $tag, $pos, $close+strlen($close_tag)-$pos);
+	}
+	return $string;
+}
+
+//
+//! Function to scramble sensitive imformation to foil spammers.
+//
 
 define('DCODE_OPEN_TAG', '<!--encode>');
 define('DCODE_CLOSE_TAG', '</encode-->');
 
-function dcode($string, $addNoScript=true) { // scans for the presence of <!--encode> ... </encode--> and obfuscates the text inside // note that the default <noscript> message uses class .bmatch
-	$open_tag = DCODE_OPEN_TAG;
-	$close_tag = DCODE_CLOSE_TAG;
-	while (false !== ($pos = strpos($string, $open_tag))) {
-		// find the closing [/encode] and substitute all the text inbetween with scrambled text
-		if (false === ($close = strpos($string, $close_tag, $pos))) { break; }
-		$uppShift = mt_rand(3, 23);
-		$lowShift = mt_rand(3,23);
-		$numShift = mt_rand(2,8);
-		$shifted = substr($string, $pos+strlen($open_tag), $close-($pos+strlen($open_tag)));
-		$shifted = preg_replace_callback('/[A-Z]/', function ($m) use ($uppShift) { return chr( (90>=($c=ord($m[0])+$uppShift)) ? $c : $c-26 ); }, $shifted);
-		$shifted = preg_replace_callback('/[a-z]/', function ($m) use ($lowShift) { return chr( (122>=($c=ord($m[0])+$lowShift)) ? $c : $c-26 ); }, $shifted);
-		$shifted = preg_replace_callback('/\d/', function ($m) use ($numShift) { return chr( (57>=($c=ord($m[0])+$numShift)) ? $c : $c-10 ); }, $shifted);
-		$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . '<!--' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[A-Z]/g,function(c){return String.fromCharCode(90>=(c=c.charCodeAt(0)+' . (26-$uppShift) . ')?c:c-26);}).replace(/[a-z]/g,function(c){return String.fromCharCode(122>=(c=c.charCodeAt(0)+' . (26-$lowShift) . ')?c:c-26);}).replace(/\d/g,function(c){return String.fromCharCode(57>=(c=c.charCodeAt(0)+' . (10-$numShift) . ')?c:c-10);}));' . PHP_EOL . '//-->' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
-		if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
-		$string = substr_replace($string, $coded, $pos, $close+strlen($close_tag)-$pos);
-	}
-	return $string;
+function dcodeReplacer($shifted) {
+	$uppShift = mt_rand(3, 23);
+	$lowShift = mt_rand(3,23);
+	$numShift = mt_rand(2,8);
+	$shifted = preg_replace_callback('/[A-Z]/', function ($m) use ($uppShift) { return chr( (90>=($c=ord($m[0])+$uppShift)) ? $c : $c-26 ); }, $shifted);
+	$shifted = preg_replace_callback('/[a-z]/', function ($m) use ($lowShift) { return chr( (122>=($c=ord($m[0])+$lowShift)) ? $c : $c-26 ); }, $shifted);
+	$shifted = preg_replace_callback('/\d/', function ($m) use ($numShift) { return chr( (57>=($c=ord($m[0])+$numShift)) ? $c : $c-10 ); }, $shifted);
+	$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . '<!--' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[A-Z]/g,function(c){return String.fromCharCode(90>=(c=c.charCodeAt(0)+' . (26-$uppShift) . ')?c:c-26);}).replace(/[a-z]/g,function(c){return String.fromCharCode(122>=(c=c.charCodeAt(0)+' . (26-$lowShift) . ')?c:c-26);}).replace(/\d/g,function(c){return String.fromCharCode(57>=(c=c.charCodeAt(0)+' . (10-$numShift) . ')?c:c-10);}));' . PHP_EOL . '//-->' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
+	if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
+	return $coded;
+}
+
+function dcode($string, $addNoScript=true) { // Scans for the presence of <!--encode> ... </encode--> and obfuscates the text inside. Note that the default <noscript> message uses class .bmatch.
+	return scanTag($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, 'dcodeReplacer');
 }
 
 // ------------------------------
