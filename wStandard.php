@@ -202,7 +202,7 @@ function dcode($string, $addNoScript=true) { // Wrapper function to simplify the
 		$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . '<!--' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[A-Z]/g,function(c){return String.fromCharCode(90>=(c=c.charCodeAt(0)+' . (26-$uppShift) . ')?c:c-26);}).replace(/[a-z]/g,function(c){return String.fromCharCode(122>=(c=c.charCodeAt(0)+' . (26-$lowShift) . ')?c:c-26);}).replace(/\d/g,function(c){return String.fromCharCode(57>=(c=c.charCodeAt(0)+' . (10-$numShift) . ')?c:c-10);}));' . PHP_EOL . '//-->' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
 		if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
 		return $coded;
-	}
+	};
 	return scanTag($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, $replacer);
 }
 
