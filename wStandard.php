@@ -14,7 +14,7 @@
 */
 
 // -----------------------------
-//! errors, exceptions and error logs
+// !errors, exceptions and error logs
 
 error_reporting(E_ALL ^ E_NOTICE ^ E_STRICT);
 
@@ -25,7 +25,7 @@ function formatException($e) {
 function w_error_log($ident, $type, $msg, $excp=null) { error_log("[" . suffixIfCe($ident, '-') . "$type] $msg"); if ($excp) { error_log(formatException($excp)); } }
 
 // -----------------------------
-//! confirming the subdomain and http or https
+// !confirming the subdomain and http or https
 
 function w_confirmServer($hostname, $https=false, $domain='www') {
 	if ($https) {
@@ -36,7 +36,7 @@ function w_confirmServer($hostname, $https=false, $domain='www') {
 }
 
 // -----------------------------
-//! string functions
+// !string functions
 
 function rand_str($len, $chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
 	for ($i=0; $i<$len; $i++) { $ret .= $chars[mt_rand(0, strlen($chars)-1)]; }
@@ -48,7 +48,7 @@ function truncateString($string, $maxLen=24) {
 }
 
 // -----------------------------
-//! date functions
+// !date functions
 
 function dateOrNone($date, $preps=true) { return ( $date ? getTimeDateDisplay(strtotime($date), $preps) : 'None' ); } // for presenting dates in detail lists on our admin pages
 
@@ -95,7 +95,7 @@ function getTimeIntervalDisplay($timestamp) {
 function getDateAndIntervalDisplay($datestring) { if (!$datestring) { return ''; } return getTimeDateDisplay($stamp = strtotime($datestring), false) . ' (' . getTimeIntervalDisplay($stamp) . ')'; }
 
 // -----------------------------
-//! functions to generate common elements
+// !functions to generate common elements
 
 function areYouSure($item) {
 	return 'onclick="javascript:return confirm(\'' . addslashes($item) . '?\')"';
@@ -170,7 +170,7 @@ function listOfLinks($links) { // array of items such as: array('link'=>'', 'dis
 }
 
 //
-//! Generic function to replace sections delimited by custom tags.
+// !Generic function to replace sections delimited by custom tags.
 //
 
 function scanTag($string, $open_tag, $close_tag, $replacer) {
@@ -185,7 +185,7 @@ function scanTag($string, $open_tag, $close_tag, $replacer) {
 }
 
 //
-//! Function to scramble sensitive imformation to foil spammers.
+// !Function to scramble sensitive imformation to foil spammers.
 //
 
 define('DCODE_OPEN_TAG', '<!--encode>');
@@ -207,7 +207,7 @@ function dcode($string, $addNoScript=true) { // Wrapper function to simplify the
 }
 
 //
-//! Redirects, in the typical case, from an edit page back to a display page, using parameters present in GET or POST to construct the redirect URL.
+// !Redirects, in the typical case, from an edit page back to a display page, using parameters present in GET or POST to construct the redirect URL.
 //
 
 // Sets the location and exits the PHP script in order to redirect the browser. The assumption is that the base URL is the same as the current URLPath, and the parameters needed to control the specific page are already present in the GET or POST request, and we just need to copy over the ones that are important. Those are specified by key with the -- wait for it -- $keys parameter. If a fragment is desired, you pass that in as an object to the $target parameter, and the `getFragment` function will be called on that object. The `others` parameter is a keyed array of additional URL parameters that are not in GET or POST.

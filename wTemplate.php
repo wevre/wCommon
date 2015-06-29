@@ -19,7 +19,7 @@ define('SKEY_ERROR', 'error');
 define('SKEY_CONFIRM', 'confirm');
 
 // -----------------------------
-//! Template class extends the template class to add the very convenient methods parseBlock() and setBlockVariables()
+// !Template class extends the template class to add the very convenient methods parseBlock() and setBlockVariables()
 // scripts can use Template to parse a template file for an element that will be inserted into the final page
 
 class Template extends HTML_Template_Sigma {
@@ -45,7 +45,7 @@ class Template extends HTML_Template_Sigma {
 } // end of Template definition
 
 // -----------------------------
-//! wTemplate includes convenient functions for common page elements
+// !wTemplate includes convenient functions for common page elements
 
 class wTemplate extends Template {
 
@@ -56,7 +56,7 @@ class wTemplate extends Template {
 	}
 
 	// -----------------------------
-	//! methods for standard template parts: style sheets, scripts, and so forth // all these should be defined in the tmpl-standard.tpl file
+	// !methods for standard template parts: style sheets, scripts, and so forth // all these should be defined in the tmpl-standard.tpl file
 
 	function addStyleSheet($sheet) { $this->parseBlock('BLK-STYLE', array('STYLESHEET'=>$sheet, )); }
 
@@ -71,7 +71,7 @@ class wTemplate extends Template {
 	function addOnload($string) { $this->parseBlock('BLK-ONLOADS', array('ONLOAD'=>$string, )); }
 
 	// -----------------------------
-	//! handling messages and items in the main section of the page
+	// !handling messages and items in the main section of the page
 	//NOTE: assumes the presence of the script-fader.js script
 
 	function addMessage($msg, $class='') {
@@ -91,7 +91,7 @@ class wTemplate extends Template {
 	}
 
 	// -----------------------------
-	//! functions for setting the error or confirm message that will display at the top of the page
+	// !functions for setting the error or confirm message that will display at the top of the page
 
 	static function resetErrorMessages() { unset($_SESSION[SKEY_ERROR]); }
 

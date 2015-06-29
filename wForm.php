@@ -30,7 +30,7 @@ define('SKEY_FORM_ERRORS', 'form-errors');
 define('SKEY_FORM_VALUES', 'form-values');
 
 // -----------------------------
-//! error function for checksums
+// !error function for checksums
 
 function form_error_log($msg, $excp=null) { /*w_error_log(null, 'FORM', $msg, $excp);*/ }
 
@@ -52,7 +52,7 @@ class wFormBuilder {
 	static function getDateSample() { return 'Enter dates using a YYYY-MM-DD HH:MM:SS format (24-hour clock). For example, today would be:<span class="eg">' . date('Y-m-d H:i:s') . '</span>'; }
 
 	// -----------------------------
-	//! values and errors in the $_SESSION
+	// !values and errors in the $_SESSION
 
 	static function setSessionError($name, $msg) { $_SESSION[SKEY_FORM_ERRORS][$name] = $msg; }
 
@@ -65,7 +65,7 @@ class wFormBuilder {
 	static function grabSessionValues($values=null) { $_SESSION[SKEY_FORM_VALUES] = ( $values ? $values : $_POST ); }
 
 	// -----------------------------
-	//! checking POST values
+	// !checking POST values
 
 	static function testUniqueKey($cnxn, $gname, $value, $name) { // finds the value of $_POST[$name] and checks if it is a unique key in the database, setting an error if it is not
 		if (!$cnxn->isUniqueKey($gname, $value)) { self::setSessionError($name, 'Must be unique'); return false; }
@@ -122,7 +122,7 @@ class wFormBuilder {
 	}
 
 	// -----------------------------
-	//! adding parts to the form
+	// !adding parts to the form
 
 	function addText($label, $value) {
 		$this->middle .= '<p class="lbl"><label>' . $label . '</label></p><p class="inp">' . $value . '</p>';
@@ -256,7 +256,7 @@ class wFormBuilder {
 	}
 
 	// -----------------------------
-	//! handling file uploads
+	// !handling file uploads
 
 	static function didUpload($name) { return $_FILES[$name]['size']>0 && $_FILES[$name]['tmp_name'] && $_FILES[$name]['name'] && $_FILES[$name]['error']!=UPLOAD_ERR_NO_FILE; } // we check up and down, left and right, that the user actually attempted to upload a file
 
