@@ -13,14 +13,17 @@
 *
 */
 
+require_once 'wCommon/wStandard.php';
+
 class wHTMLComposer {
 
 	function __construct() {
 		$this->middle = '';
+		$this->tagStack = [];
 	}
 
 	function beginTag($tag, $class, $attribs=[], $content='') {
-		$this->currentTag = $tag;
+		array_push($this->tagStack, $tag);
 		$this->middle .= $this->getTag($tag, $class, $attribs, $content);
 	}
 
@@ -33,7 +36,8 @@ class wHTMLComposer {
 	}
 
 	function endTag() {
-		$this->middle .= "</{$this->currentTag}>";
+		$tag = array_pop($this->tagStack);
+		$this->middle .= "</{$tag}>";
 	}
 
 	function getHTML() {
