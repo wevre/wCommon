@@ -132,6 +132,14 @@ class wFormBuilder {
 		$this->middle .= '<input type="hidden" name="' . $name . '" value="' . $value . '"' . ( $id ? ' id="' . $id . '"' : '' ) . ' />';
 	}
 
+/**
+* Adds one or more hidden fields to the form, using the keys to retreive values from $_REQUEST.
+* @param array $keys a list of keys that exist in $_REQUEST
+*/
+	function addHiddenKeys($keys=array()) {
+		foreach (array_filter($keys, function($k) { return $_REQUEST[$k]; }) as $key) { $this->addHiddenField($key, $_REQUEST[$key]); }
+	}
+
 	function addInputField($items) { // array of items such as: array('label'=>'', 'name'=>'', 'value'=>'', 'type'=>'', 'xattr'=>'', 'help'=>'', ) 'type' can be 'password' or defaults to 'text'
 		//NOTE: we use id="" in the text field (and construct it from the 'name') so that clicking on the label (which has the for="" attribute set) will activate the text field
 		//NOTE: the value="" attribute is what will be pre-populated in the field when the form is displayed, and will pre-populate with stashed session value
