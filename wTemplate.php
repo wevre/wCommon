@@ -1,6 +1,6 @@
 <?php
 /**
-* Expands the functionality of HTML_Template_Sigma.
+* Subclasses that expand the functionality of HTML_Template_Sigma.
 *
 * @copyright 2014-2015 Mike Weaver
 *

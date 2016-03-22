@@ -1,6 +1,6 @@
 <?php
 /**
-* Help with displaying and parsing web forms.
+* Helper class for displaying and parsing web forms.
 *
 * @copyright 2013-2015 Mike Weaver
 *
