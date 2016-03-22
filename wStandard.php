@@ -317,7 +317,14 @@ function scanTag($string, $open_tag, $close_tag, $replacer) {
 	return $string;
 }
 
+/**
+* Constant that defines the open tag for a DCODE block.
+*/
 define('DCODE_OPEN_TAG', '<!--encode>');
+
+/**
+* Constant that defines the close tag for a DCODE block.
+*/
 define('DCODE_CLOSE_TAG', '</encode-->');
 
 /**
