@@ -57,7 +57,7 @@ class wHTMLComposer {
 * @see getTag() for description of the parameters.
 */
 	function addTag($tag, $class='', $attribs=[], $content='') {
-		$this->middle .= self::getTag($tag, $class, $attribs, $content) . ( $this->isSelfClosingTag($tag) ? ' />' : "</$tag>" );
+		$this->middle .= self::getTag($tag, $class, $attribs, $content) . ( self::isSelfClosingTag($tag) ? ' />' : "</$tag>" );
 		$this->registerClass($class);
 	}
 
@@ -99,7 +99,7 @@ class wHTMLComposer {
 	protected static function getTag($tag, $class='', $attribs=[], $content='') {
 		$filtered = array_filter($attribs, function ($v) { return !empty($v); } );
 		$attribString = implode(' ', array_map(function($k, $v) { return "$k=\"$v\""; }, array_keys($filtered), $filtered));
-		return '<' . $tag . wrapIfCe($class, ' class="', '"') . prefixIfCe($attribString, ' ') . ( $this->isSelfClosingTag($tag) ? '' : '>' . $content );
+		return '<' . $tag . wrapIfCe($class, ' class="', '"') . prefixIfCe($attribString, ' ') . ( self::isSelfClosingTag($tag) ? '' : '>' . $content );
 	}
 
 //
