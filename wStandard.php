@@ -121,9 +121,9 @@ function truncateString($string, $maxLen=24) {
 }
 
 /**
-*
+* Wraps $item in $prefix and $suffix if $test is boolean true, or if $test is an array and $item is in it.
 */
-function wrap($test, $item, $prefix, $suffix) { // wraps $item in $prefix and $suffix if $test is boolean true, or if $test is an array an $item is in it //NOTE: might need to cast $test to (bool) when calling this function
+function wrap($test, $item, $prefix, $suffix) {
 	if ((is_bool($test) && $test) || (is_array($test) && in_array($item, $test))) { return $prefix.$item.$suffix; }
 	else { return $item; }
 }
@@ -142,14 +142,14 @@ function wrapIfCe($item, $prefix, $suffix) { return wrap((bool)$item, $item, $pr
 * @param string $item the string to prepend to if it is not empty
 * @param string $pre the prefix to use, defaults to a space
 */
-function prefixIfCe($item, $pre=' ') { return ( $item ? $pre : '' ) . $item; } // prepends a string if $item string exists
+function prefixIfCe($item, $pre=' ') { return ( $item ? $pre : '' ) . $item; }
 
 /**
 * Appends a string, if it is not empty, with a space or other character.
 * @param string $item the string to append to if it is not empty
 * @param string $suff the suffix to use, defaults to a space
 */
-function suffixIfCe($item, $suff=' ') { return $item . ( $item ? $suff : '' ); } // appends a string if $item exists
+function suffixIfCe($item, $suff=' ') { return $item . ( $item ? $suff : '' ); }
 
 //
 // !Date functions
@@ -245,6 +245,9 @@ function areYouSure($item) {
 	return 'onclick="javascript:return confirm(\'' . addslashes($item) . '?\')"';
 }
 
+/**
+*
+*/
 function actionLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', ), 'title' is optional and defaults to 'display' //NOTE: creates a sequence of <a> tags which should be wrapped in a parent with class="ibwrap", also makes use of class .hide
 	if (!count($links)) { return ''; }
 	foreach ($links as $item) {
@@ -261,22 +264,34 @@ function actionLinks($links) { // array of items such as: array('link'=>'', 'dis
 	return $string;
 }
 
+/**
+*
+*/
 function displayProps($props) { // displays a list of properties, they will display as a simple <ul> list, but no bullets // assumes .dlist class is defined
 	foreach ($props as $name=>$val) { $string .= '<li><span class="fname">' . $name . ':&ensp;</span>' . $val . '</li>'; }
 	return '<ul class="dlist">' . $string . '</ul>';
 }
 
+/**
+*
+*/
 function inlineProps($props) { // displays a list of props as inline <p>'s // assumes classes .iprop and .fname are defined
 	if (!$props) { return ''; } // short-circuit, allows us to pass an empty array
 	foreach ($props as $name=>$val) { $string .= '<p><span class="fname">' . $name . ':</span>&ensp;' . $val . '</p>'; }
 	return '<div class="iprop">' . $string . '</div>';
 }
 
+/**
+*
+*/
 function titleWithLinks($title, $links, $force_wrap=false) { // displays a title with action links to the right, all of them as inline-blocks, so title should be wrapped in <h1> or <p> tags // relies on class .ibwrap
 	if (!$force_wrap && !$links) { return $title; } // bail out if no links
 	return '<div class="ibwrap">' . $title . actionLinks($links) . '</div>';
 }
 
+/**
+*
+*/
 function listOfLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', 'src'=>, ) where 'display' will display first in bold, then an optional image, then an optional 'description'; 'title' (for the <a title=""> and <img alt="">) is optional and will default to 'display'; 'src', if included, will display the image //NOTE: creates a UL list of links with optional images, which are styled with classes .linklist and .llimg
 	foreach ($links as $item) {
 		if (!$item) { continue; }
