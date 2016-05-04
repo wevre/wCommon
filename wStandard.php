@@ -169,7 +169,7 @@ function getTimeDateDisplay($timestamp=null) {
 /**
 * Returns the time formatted with am/pm in small caps.
 * Won't include the minutes if they are zero. So 7:00 prints as 7, but 6:52 will print with the minutes.
-* Uses a span tag and the class "ampm" to format the meridiem. Projects using this should have a class defined in CSS:
+* Uses a span element and the class "ampm" to format the meridiem. Projects using this should have a class defined in CSS:
 * <code>
 * .ampm { font-variant: small-caps; }
 * </code>
@@ -235,6 +235,20 @@ function getTimeIntervalDisplay($timestamp) {
 */
 function getDateAndIntervalDisplay($datestring) { if (!$datestring) { return ''; } return getTimeDateDisplay($stamp = strtotime($datestring), false) . ' (' . getTimeIntervalDisplay($stamp) . ')'; }
 
+
+//
+// !Array functions
+//
+
+/**
+* Maps a function over the key-value pairs of an array
+* @param callable $function a function that takes two parameters, the key and the value
+* @param array $array the array to map
+*/
+function array_key_map($function, $array) {
+	return array_map($function, array_keys($array), $array);
+}
+
 // -----------------------------
 // !Functions for common web page elements
 
@@ -248,7 +262,7 @@ function areYouSure($item) {
 /**
 *
 */
-function actionLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', ), 'title' is optional and defaults to 'display' //NOTE: creates a sequence of <a> tags which should be wrapped in a parent with class="ibwrap", also makes use of class .hide
+function actionLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', ), 'title' is optional and defaults to 'display' //NOTE: creates a sequence of <a> elements which should be wrapped in a parent with class="ibwrap", also makes use of class .hide
 	if (!count($links)) { return ''; }
 	foreach ($links as $item) {
 		if (!$item) { continue; }
@@ -284,7 +298,7 @@ function inlineProps($props) { // displays a list of props as inline <p>'s // as
 /**
 *
 */
-function titleWithLinks($title, $links, $force_wrap=false) { // displays a title with action links to the right, all of them as inline-blocks, so title should be wrapped in <h1> or <p> tags // relies on class .ibwrap
+function titleWithLinks($title, $links, $force_wrap=false) { // displays a title with action links to the right, all of them as inline-blocks, so title should be wrapped in <h1> or <p> elements // relies on class .ibwrap
 	if (!$force_wrap && !$links) { return $title; } // bail out if no links
 	return '<div class="ibwrap">' . $title . actionLinks($links) . '</div>';
 }
@@ -308,46 +322,46 @@ function listOfLinks($links) { // array of items such as: array('link'=>'', 'dis
 }
 
 //
-// !Custom HTML tag processing
+// !Custom HTML element processing
 //
 
 /**
-* Repeatedly searches text for custom open and close tags, and then calls the $replace function to substitute the text.
+* Repeatedly searches text for an element with custom opening and closing tags, and then calls the $replace function to substitute the text.
 * The "tags" will typically look like custom HTML tags, but can technically be any text.
-* The $replacer function should take a single string argument, which will be the text in between the open and close tags.
+* The $replacer function should take a single string argument, which will be the text in between the opening and closing tags.
 * The tags are not passed to $replacer. The result returned by $replacer will replace the original tags and content.
 * @param string $string the text to search
-* @param string $open_tag the custom open tag
-* @param string $end_tag the custom end tag
+* @param string $open_tag the custom opening tag
+* @param string $end_tag the custom closing tag
 * @param callable $replacer a function to replace the found text
 */
-function scanTag($string, $open_tag, $close_tag, $replacer) {
+function scanElement($string, $open_tag, $close_tag, $replacer) {
 	while (false !== ($pos = strpos($string, $open_tag))) {
-		// find the closing tag and process the text inbetween
+		// Find the closing tag and process the text inbetween.
 		if (false === ($close = strpos($string, $close_tag, $pos))) { break; }
 		$target = substr($string, $pos+strlen($open_tag), $close-($pos+strlen($open_tag)));
-		$tag = $replacer($target);
-		$string = substr_replace($string, $tag, $pos, $close+strlen($close_tag)-$pos);
+		$elem = $replacer($target);
+		$string = substr_replace($string, $elem, $pos, $close+strlen($close_tag)-$pos);
 	}
 	return $string;
 }
 
 /**
-* Constant that defines the open tag for a DCODE block.
+* Constant that defines the opening tag for a DCODE block.
 */
-define('DCODE_OPEN_TAG', '<!--encode>');
+const DCODE_OPEN_TAG = '<!--encode>';
 
 /**
-* Constant that defines the close tag for a DCODE block.
+* Constant that defines the closing tag for a DCODE block.
 */
-define('DCODE_CLOSE_TAG', '</encode-->');
+const DCODE_CLOSE_TAG = '</encode-->';
 
 /**
 * Replaces text in a string with a scrambled version and a javascript function to descramble it.
-* The string can contain multiple instances of sensitive text surrounded by the DCODE OPEN and DCODE CLOSE tag, each instance will be replaced.
+* The string can contain multiple, non-nested instances of sensitive text surrounded by the DCODE OPEN and DCODE CLOSE tags, each instance will be replaced.
 * @param string $string the string which contains special tags to replace with the scrambler
-* @param bool $addNoScript flag to control whether additional <noscript> tag is added
-* @uses scanTag()
+* @param bool $addNoScript flag to control whether additional <noscript> element is added
+* @uses scanElement()
 */
 function dcode($string, $addNoScript=true) {
 	$replacer = function($shifted) {
@@ -361,7 +375,7 @@ function dcode($string, $addNoScript=true) {
 		if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
 		return $coded;
 	};
-	return scanTag($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, $replacer);
+	return scanElement($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, $replacer);
 }
 
 ?>

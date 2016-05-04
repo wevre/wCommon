@@ -32,6 +32,7 @@ function normalizeLineEndings(&$s) {
 		$s = str_replace("\r\n", "\n", $s);
 		$s = str_replace("\r", "\n", $s);
 		$s = preg_replace("/\n{2,}/", "\n\n", $s);
+		//showLineEndings($s);
 }
 
 /**
@@ -45,15 +46,26 @@ class wFormBuilder {
 	const SKEY_ERRORS = 'form-errors';
 	const SKEY_VALUES = 'form-values';
 
+	const KEY_ACTION = 'a';
+
+	const CLASS_LABEL = 'lbl';
+	const CLASS_INPUT = 'inp';
+	const CLASS_HELP = 'help';
+	const CLASS_EG = 'eg';
+
 // Constants for controlling how form data will be scrubbed.
 	const ENCODE_HTML = 'encode-html';
 	const STRIP_ALL_TAGS = 'strip-all-tags';
+	const NO_SPEC_CHARS = 'no-spec-chars';
 	const MUST_EXIST = 'must-exist';
 	const LOWER_CASE = 'lower-case';
 	const FILTER_EMAIL = 'filter-email';
 	const POSITIVE = 'positive';
 	const NON_NEGATIVE = 'non-negative';
-	const FLAG_NONE = 'none'; // useful as a dummy action when the array needs to exist, but we don't have any flags to give it
+	const FLAG_NONE = 'none'; // Useful as a dummy action when the array needs to exist, but we don't have any flags to give it.
+
+	const HASH_SUFFIX = '-hash';
+	const HASH_LEN = -7; // Will be used with substr function to take the last n characters of the hash.
 
 /**
 * An instance of wHTMLComposer for generating HTML.
@@ -88,7 +100,7 @@ class wFormBuilder {
 
 /**
 * Returns an error message, if it exists, associated with a form name.
-* The message is wrapped in a SPAN tag with class 'error' and prepended with an m-dash,
+* The message is wrapped in a SPAN element with class 'error' and prepended with an m-dash,
 * because it is intended to be attached to the label for the form element.
 */
 	static function getSessionError($name) { return wrapIfCe($_SESSION[self::SKEY_ERRORS][$name], '<span class="error"> &#8212; ', '</span>'); }
@@ -180,7 +192,7 @@ class wFormBuilder {
 	}
 
 /**
-* Returns true if the sha1 hash value of $value matches the hash stored in $_POST[$name . '_hash_'].
+* Returns true if the sha1 hash value of $value matches the hash stored in $_POST[$name . HASH_SUFFIX].
 * This method will first normalize the line endings of $value before testing for a matching hash.
 * Typical use looks something like this, where we test if the hashes match and if not, update the value on our internal object.
 * <code>
@@ -195,8 +207,7 @@ class wFormBuilder {
 	static function testChecksum($name, $value) {
 		if (!$value) { return false; }
 		normalizeLineEndings($value);
-		showLineEndings($value);
-		$val = ($_POST[$name.'_hash_']==sha1($value));
+		$val = ($_POST[$name . self::HASH_SUFFIX] == substr(sha1($value), self::HASH_LEN));
 		form_error_log('for name ' . $name . ' checksum matches? ' . ( $val ? 'YES' : 'NO' ));
 		return $val;
 	}
@@ -213,6 +224,10 @@ class wFormBuilder {
 		else if (!$stamp) { return null; }
 		else { return date('Y-m-d H:i:s', $stamp); }
 	}
+
+//
+// !Other form-related things
+//
 
 /**
 * Splits and returns as an array of strings the value found in $_POST[$name].
@@ -231,232 +246,371 @@ class wFormBuilder {
 		return preg_replace('/(\d )([a|p]m)([^a-zA-Z]|$)/', '\1<span class="ampm">\2</span>\3', $value);
 	}
 
+/**
+* Adds a statement and example about entering dates.
+* Uses the class 'eg' by default, but another can be supplied by callers or by subclassers.
+* @param string $class the class to use for the date example, defaults to 'eg'
+*/
+	static function getDateSample() {
+		return 'Enter dates using a YYYY-MM-DD HH:MM:SS format (24-hour clock). For example, today would be: <span class="' . self::CLASS_EG . '">' . date('Y-m-d H:i:s') . '</span>';
+	}
+
 //
 // !Adding parts to the form
 //
 
 /**
 * Adds text with a label. Use it for a value that isn't editable, but should be displayed consistent with  other editable fields.
-* Uses the classes "lbl" and "inp".
 * @param string $label the label for the text
 * @param string $value the text itself
 */
 	function addText($label, $value) {
-		$this->composer->beginTag('p', 'lbl');
-		$this->composer->addTag('label', null, null, $label);
-		$this->composer->endTag();
-		$this->composer->addTag('p', 'inp', null, $value);
+		$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+		$this->composer->addElement('label', null, $label);
+		$this->composer->endElement();
+		$this->composer->addElement('p', array('class'=>self::CLASS_INPUT), $value);
 	}
 
 /**
 * Adds a hidden field to the form.
 * @param string $name name of the hidden field
 * @param string $value value for the hidden field
-* @param string $id optional id for the hidden field
 */
 	function addHiddenField($name, $value) {
-		$this->composer->addTag('input', null, array('type'=>'hidden', 'name'=>$name, 'value'=>$value, 'id'=>$name, ));
+		$this->composer->addElement('input', array('type'=>'hidden', 'name'=>$name, 'value'=>$value, 'id'=>$name, ));
 	}
 
 /**
 * Adds one or more hidden fields to the form, using the specified $keys to retreive values from $_REQUEST.
 * @param array $keys a list of keys that exist in $_REQUEST
+* @uses addHiddenField()
 */
 	function addHiddenKeys($keys=array()) {
 		foreach (array_filter($keys, function($k) { return $_REQUEST[$k]; }) as $key) { $this->addHiddenField($key, $_REQUEST[$key]); }
 	}
 
 /**
-* Adds an input field with a label and optional help message.
-* Each of those three will be wrapped in its own 'p' tag with the class "lbl", "help", and "inp" for each 'p' tag, respectively.
+* Adds an input field with (optional) label and (optional) help message.
+* Each of those three will be wrapped in its own 'p' element using the HTML classes CLASS_LABEL, CLASS_HELP, and CLASS_INPUT.
 * Will also include an error message as part of the label if it has been set on $_SESSION.
-* The single parameter $items passed to this method is an array of items that control how the label and text field will display. The contents are:
+* The single parameter $items passed to this method is an array of items that control how the label and text field will display.
+* For most of the entries in the $items array, the keys represent typical attributes for the 'input' element. The contents are:
 * <dl>
-* <dt>name</dt><dd>form name of the text field, will also be used as the "for" parameter of the label</dd>
-* <dt>value</dt><dd>value for field, if a session value exists it will override whatever is in $items['value']</dd>
+* <dt>type</dt><dd>can be 'password', defaults to 'text'</dd>
+* <dt>value</dt><dd>value for field, if a session value exists it will override whatever is passed in $items['value']</dd>
+* <dt>name</dt><dd>form name of the text field, will also be used as the 'for' attribute of the label and the default 'id' attribute for the text field</dd>
+* <td>id</dt><dd>The 'id' for the text field. If not supplied, it will be the same and 'name'.</dd>
 * <dt>label</dt><dd>label to include with the text field</dd>
 * <dt>label-id</dt><dd>optional id to put on the label</dd>
-* <dt>help</dt><dd>text that will be wrapped in a 'p' tag between the label and the text field</dd>
+* <dt>help</dt><dd>text that will be wrapped in a 'p' element between the label and the text field</dd>
 * <dt>help-id</dt><dd>optional id to put on the help paragraph</dd>
-* <dt>type</dt><dd>can be 'password', defaults to 'text'</dd>
-* <dt>xattr</dt><dd>additional attributes to include in the 'input' tag, as an array of the form array('attrib-name'=>'attrib-value', ... )</dd>
+* <dt>xattr</dt><dd>additional attributes to include in the 'input' element, as an array of the form array('attrib-name'=>'attrib-value', ... )</dd>
 * </dl>
 */
 	function addInputField($items) {
 		if ($items['label']) {
-			$this->composer->beginTag('p', 'lbl');
-			$this->composer->addTag('label', null, array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
-			$this->composer->endTag();
+			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
+			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addTag('p', 'help', array('id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
+		if (!$items['value']) { $items['value'] = ''; }
 		if ($this->sessionValue($items['name'])) { $items['value'] = $this->sessionValue($items['name']); }
-		$this->composer->beginTag('p', 'lbl');
-		$this->composer->addTag('input', null, array_merge(array('type'=>$items['type'], 'value'=>$items['value'], 'name'=>$items['name'], 'id'=>$items['name'], ), $items['xattr']));
-		$this->composer->endTag();
+		if (!$items['id']) { $items['id'] = $items['name']; }
+		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
+		$this->composer->endElement();
 	}
 
 /**
-*
+* Adds a text area with (optional) label and (optional) help message.
+* Each of those three will be wrapped in its own 'p' element using the HTML classes CLASS_LABEL, CLASS_HELP, and CLASS_INPUT.
+* Will also include an error message as part of the label if it has been set on $_SESSION.
+* The single parameter $items passed to this method is an array of items that control how the label and text area will display.
+* For most of the entries in the $items array, the keys represent typical attributes for the 'textarea' element. The contents are:
+* <dl>
+* <dt>value</dt><dd>value for the text area, if a session value exists it will override whatever is passed in $items['value']</dd>
+* <dt>name</dt><dd>form name of the text area, will also be used as the 'for' attribute of the label and the default 'id' attribute for the text area</dd>
+* <td>id</dt><dd>The 'id' for the text area. If not supplied, it will be the same and 'name'.</dd>
+* <td>rows</dt><dd>value for the 'rows' attribute of the text area, defaults to 5</dd>
+* <td>checksum</dt><dd>If present, a sha1 hash will be calculated on 'value' and included in the form as a hidden field. When the form is processed, if no changes have been made (meaning the original hash and the one calculated on the POST data match) then the receiving script can skip updating database fields.</dd>
+* <dt>label</dt><dd>label to include with the text area</dd>
+* <dt>label-id</dt><dd>optional id to put on the label</dd>
+* <dt>help</dt><dd>text that will be wrapped in a 'p' element between the label and the text area</dd>
+* <dt>help-id</dt><dd>optional id to put on the help paragraph</dd>
+* <dt>xattr</dt><dd>additional attributes to include in the 'textarea' element, as an array of the form array('attrib-name'=>'attrib-value', ... )</dd>
+* </dl>
 */
-	function addTextArea($items) { // array of items such as: array('label'=>'', 'name'=>'', 'value'=>'', 'xattr'=>'', 'help'=>'', 'checksum'=>'', 'rows'=>'', )
-		//NOTE: we use id="" in the text field (and construct it from the 'name') so that clicking on the label (which has the for="" attribute set) will activate the text field
-		//NOTE: the value="" attribute is what will be pre-populated in the field when the form is displayed, and will pre-populate with stashed session value
-		//NOTE: the name item identifies what will be sent back in the script, readable with $_POST[$name]
-		//NOTE: to support the box-office payment fields, we have a 'post-input' item that will come after the input field before its closing <p> tag
-		//NOTE: to shortcut processing, you can request a sha1 hash on the value be included -- on the processing side, if the sha1 matches we skip updating the field, if you specify a checksum, you must also include a 'value'
-		if ($items['checksum']) { normalizeLineEndings($items['value']); showLineEndings($items['value']); $this->addHiddenField($items['name'].'_hash_', sha1(trim($items['value']))); }
-		if ($this->sessionValue($items['name'])) { $items['value'] = $this->sessionValue($items['name']); }
-		if ($items['label']) { $this->middle .= '<p class="lbl"><label for="' . $items['name'] . '">' . $items['label'] . '</label>' . self::getSessionError($items['name']) . '</p>'; }
-		if ($items['help']) { $this->middle .= '<p class="help">' . $items['help'] . '</p>'; }
+	function addTextArea($items) {
+		if ($items['checksum']) {
+			normalizeLineEndings($items['value']);
+			$this->addHiddenField($items['name'] . self::HASH_SUFFIX, substr(sha1(trim($items['value'])), self::HASH_LEN));
+		}
+		if ($items['label']) {
+			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
+			$this->composer->endElement();
+		}
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		if (!$items['rows']) { $items['rows'] = 5; }
-		$this->middle .= '<p class="inp"><textarea name="' . $items['name'] . '" id="' . $items['name'] . '" rows="' . $items['rows'] . '" ' . $items['xattr'] . '>' . $items['value'] . '</textarea>' . $items['after-input'] . '</p>';
+		if (!$items['id']) { $items['id'] = $items['name']; }
+		if ($this->sessionValue($items['name'])) { $items['value'] = $this->sessionValue($items['name']); }
+		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
+		$this->composer->endElement();
 	}
 
 /**
-*
+* Adds one or more buttons to the form.
+* All added buttons will be wrapped in a single 'p' element.
+* The single parameter $butts is an array of button items: each button items is itself an array containing info to set up the button. The following list is for a single button items array.
+* <dl>
+* <dt>type</dt><dd>type attribute for the button, defaults to 'submit'</dd>
+* <dt>id</dt><dd>will default to a concatenation of name-value, so as to be unique</dd>
+* <dt>name</dt><dd>form name of the button, defaults to KEY_ACTION</dd>
+* <dt>value</dt><dd>Value for the button, goes with the name as the value passed back in the form POST data</dd>
+* <dt>display</dt><dd>title of the button that will display to the user</dd>
+* <dt>xattr</dt><dd>additional attributes to include in the 'button' element, as an array of the form array('attrib-name'=>'attrib-value', ... )</dd>
+* </dl>
 */
-	function addButtons($butts) { // array of button items, each item is an array such as: array('name'=>'', 'action'=>'', 'display'=>'', ) 'type' defaults to 'submit'; and 'name' defaults to KEY_ACTION; 'action' is the button's value; if no 'action', then 'name' and 'value' will be skipped
-		$this->middle .= '<p>';
+	function addButtons($butts) {
+		$this->composer->beginElement('p');
 		foreach ($butts as $items) {
 			if (!$items['type']) { $items['type'] = 'submit'; }
-			if (!$items['name']) { $items['name'] = KEY_ACTION; }
-			$this->middle .= '<button type="' . $items['type'] . '" id="' . $items['name'] . '" ' . ( $items['action'] ? 'name="' . $items['name'] . '" value="' . $items['action'] . '"' : '' ) . ' ' . $items['xattr'] . '>' . $items['display'] . '</button>';
+			if (!$items['name']) { $items['name'] = self::KEY_ACTION; }
+			if (!$items['id']) { $items['id'] = $items['name'] . '-' . $items['value']; }
+			$this->composer->addElement('button', array_merge(array_intersect_key($items, array_flip(['type', 'id', 'name', 'value'])), (array)$items['xattr']), $items['display']);
 		}
-		$this->middle .= '</p>';
+		$this->composer->endElement();
 	}
 
 /**
+* Adds a group of radio items to the form.
+* @param string $label outer label for the whole group
+* @param string $name form name for the group, whatever radio is selected, its `value` will be returned in $_POST[$name]
+* @param array $radios array of radio items, each item is an array described below
+* @param array $items array of additional attributes that apply to the group
 *
+* Some attributes are automatic: 'type' will be set to 'radio', 'id' will be a concatenation of 'name' and the radio item's 'value'.
+*
+* Each element of the $radios array is itself an array, which contains the following:
+* <dl>
+* <dt>value</dt><dd>what is returned in $_POST[$name] if this radio button is checked</dd>
+* <dt>selected</dt><dd>flag indicating if this radio button should be checked initially. Can be overridden by `selected` in the $items parameter, or by a session value.</dd>
+* <dt>label</dt><dd>optional, if supplied is the label that will appear next to the radio button</dd>
+* <dt>label-id</dt><dd>optional id to put on the radio button's label</dd>
+* <dt>xattr</dt><dd>optional additional attributes to include with the radio button</dd>
+* <dt>break</dt><dd>optional break to use after this radio button, if not supplied, will revert to the 'break' value included in $items</dd>
+* </dl>
+*
+* The items array may contain the following keys to control the radio group:
+* <dl>
+* <dt>break</dt><dd>string to insert in between radio buttons, defaults to br element</dd>
+* <dt>help</dt><dd>text that will be wrapped in a 'p' element between the label and the radio group</dd>
+* <dt>help-id</dt><dd>optional id to put on the help paragraph</dd>
+* <dt>label-id</dt><dd>optional id to put on the outer label</dd>
+* <dt>selected</dt><dd>optional, which button should be checked initially. Must match the `value` of one of the $radios entries. Will be overridden by a session value, if one is set.</dd>
+* </dl>
 */
-	function addRadios($label, $name, $radios, $items=array()) { // array of radio items, each item is an array such as: array('value'=>'', 'selected'=>true/false, 'xattr'=>'', 'label'=>'', ); $label is the outer label for the entire group; $items can contain 'break' or 'help' or 'selected'
-		//NOTE: PHP will return the value that is checked, readable with $_POST[$name]
-		//NOTE: we create an id (using 'name-value' to hopefully be unique) to link the checkbox and the label so clicking on the label will toggle the checkbox
-		//NOTE: replace $break with something else (such as &nbsp;) to control how the radio buttons flow
-		if ($label) { $this->middle .= '<p class="lbl"><label>' . $label . '</label>' . self::getSessionError($name) . '</p>'; }
-		if ($items['help']) { $this->middle .= '<p class="help">' . $items['help'] . '</p>'; }
+	function addRadios($label, $name, $radios, $items=array()) {
+		if ($label) {
+			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
+			$this->composer->endElement();
+		}
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$break = $items['break'] or $break = '<br />';
-		$this->middle .= '<p class="inp">';
+		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		foreach ($radios as $radio) {
 			if ($this->sessionValue($name)) { $radio['selected'] = ($this->sessionValue($name) == $radio['value']); }
 			else if ($items['selected']) { $radio['selected'] = ($items['selected'] == $radio['value']); }
-			$this->middle .= ( $doneOne ? ( $radio['break'] ? $radio['break'] : $break ) : '' ) . '<input type="radio" name="' . $name . '" value="' . $radio['value'] . '" id="' . $name . '-' . $radio['value'] . '" ' . ( $radio['selected'] ? 'checked="checked"' : '' ) . ' ' . $radio['xattr'] . '>&nbsp;<label for="' . $name . '-' . $radio['value'] . '">' . $radio['label'] . '</label>';
+			$radio['type'] = 'radio';
+			$radio['name'] = $name;
+			$radio['id'] = $name . '-' . $radio['value'];
+			$radio['checked'] = ( $radio['selected'] ? 'checked' : '' );
+			if ($doneOne) { $this->composer->addCustom( $radio['break'] ? $radio['break'] : $break ); }
+			$this->composer->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
+			if ($radio['label']) {
+				$this->composer->addCustom('&nbsp;');
+				$this->composer->addElement('label', array('for'=>$radio['id'], 'id'=>$radio['label-id']), $radio['label']);
+			}
 			$doneOne = true;
 		}
-		$this->middle .= '</p>';
+		$this->composer->endElement();
 	}
 
 /**
+* Adds a menu to the form.
+* The inputs are designed so that they will also work for the addRadios() method above.
+* @param string $label outer label for the menu
+* @param string $name form name for the menu, whatever option is selected, its `value` will be returned in $_POST[$name]
+* @param array $menus array of menu items, each item is an array described below
+* @param array $items array of additional attributes that apply to the menu
 *
-*/
-	function getRadio($label, $name, $items=array()) { // returns the code for a bare radio button, using $name and $label and optional $items=array('value'=>'', 'selected'=>true/false, 'array'=>true/false, 'xattr'=>'', ) // where value is the desired value to return in POST, select determines whether or not it is selected (and will be overridden by value, if any, in the session), and 'array' is a flag indicating whether or not the name should be suffixed with '[]'
-		if (!$items['value']) { $items['value'] = 'true'; }
-		if ($items['array'] && $this->sessionValue($name)) { $items['selected'] = in_array($items['value'], $this->sessionValue($name)); }
-		else if ($this->sessionValue($name)) { $items['selected'] = ($this->sessionValue($name)==$items['value']); }
-		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; }
-		if ($this->sessionValue($name)) { $items['selected'] = ( $items['array'] ? in_array($items['value'], $this->sessionValue($name)) : $this->sessionValue($name)==$items['value'] ); }
-		$id = $name . ( $items['array'] ? '-' . $items['value'] : '' );
-		return '<input type="radio" name="' . $name . ( $items['array'] ? '[]' : '' ) . '" value="' . $items['value'] . '" id="' . $id . '" ' . ( $items['selected'] ? 'checked="checked"' : '' ) . ' ' . $items['xattr'] . '>&nbsp;<label for="' . $id . '">' . $label . '</label>';
-	}
-
-/**
+* Each element of the $menu array is itself an array, which contains the following:
+* <dl>
+* <dt>value</dt><dd>what is returned in $_POST[$name] if this menu option is selected</dd>
+* <dt>selected</dt><dd>flag indicating if this menu option should be selected initially. Can be overridden by `selected` in the $items parameter, or by a session value.</dd>
+* <dt>label</dt><dd>text used as the visible label for the menu option, defaults to 'value'</dd>
+* </dl>
 *
+* The items array may contain the following keys to control the menu:
+* <dl>
+* <dt>id</dt><dd>optional id attribute for the select element</dd>
+* <dt>help</dt><dd>text that will be wrapped in a 'p' element between the label and the menu</dd>
+* <dt>help-id</dt><dd>optional id to put on the help paragraph</dd>
+* <dt>label-id</dt><dd>optional id to put on the outer label</dd>
+* <dt>selected</dt><dd>optional, which menu option should be selected initially. Must match the `value` of one of the $menu entries. Will be overridden by a session value, if one is set.</dd>
+* </dl>
 */
-	function addSelect($label, $name, $menus, $items=array()) { // menus is a list of item arrays, such as array('value'=>'', 'label'=>'', 'selected'=>true/false, ) similar to radio buttons, in fact the same inputs will work for both radios and selects // 'label' defaults to 'value' if not supplied // $items can contain 'help','xattr', and 'selected'
-		if ($label) { $this->middle .= '<p class="lbl"><label for="' . $name . '">' . $label . '</label>' . self::getSessionError($name) . '</p>'; }
-		if ($items['help']) { $this->middle .= '<p class="help">' . $items['help'] . '</p>'; }
-		$this->middle .= '<p class="inp"><select name="' . $name . '" id="' . $name . '" ' . $items['xattr'] . '>';
+	function addSelect($label, $name, $menus, $items=array()) {
+		if ($label) {
+			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
+			$this->composer->endElement();
+		}
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->beginElement('select', array_merge(array('name'=>$name, 'id'=>$items['id'], ), (array)$items['xattr']));
 		foreach ($menus as $menu) {
+			if ($this->sessionValue($name)) { $menu['selected'] = ( $this->sessionValue($name) == $menu['value'] ? 'selected' : '' ); }
+			else if ($items['selected']) { $menu['selected'] = ( $items['selected'] == $menu['value'] ? 'selected' : '' ); }
 			if (!$menu['label']) { $menu['label'] = $menu['value']; }
-			if ($this->sessionValue($name)) { $menu['selected'] = ($this->sessionValue($name) == $menu['value']); }
-			else if ($items['selected']) { $menu['selected'] = ($items['selected'] == $menu['value']); }
-			$this->middle .= '<option value="' . $menu['value'] . '" ' . ( $menu['selected'] ? 'selected="selected"' : '' ) . '>' . $menu['label'] . '</option>';
+			$this->composer->addElement('option', array_intersect_key($menu,array_flip(['value', 'selected'])), $menu['label']);
 		}
-		$this->middle .= '</select></p>';
+		$this->composer->endElement();
+		$this->composer->endElement();
 	}
 
 /**
+* Adds an array of checkbox items to the form.
+* @param string $label outer label for the whole group
+* @param string $name form name for the group, whichever checkboxes are selected, their `value` will be returned in the array at $_POST[$name]
+* @param array $boxes array of checkbox items, each item is an array described below
+* @param array $items array of additional attributes that apply to the group
 *
+* Some attributes are automatic: 'type' will be set to 'checkbox', 'id' will be a concatenation of 'name' and the checkbox item's 'value'.
+*
+* Each element of the $boxes array is itself an array, which contains the following:
+* <dl>
+* <dt>value</dt><dd>what is returned in the array at $_POST[$name] if this checkbox is checked</dd>
+* <dt>selected</dt><dd>flag indicating if this checkbox should be checked initially. Can be overridden by `selected` in the $items parameter, or by a session value.</dd>
+* <dt>label</dt><dd>optional, if supplied is the label that will appear next to the checkbox</dd>
+* <dt>label-id</dt><dd>optional id to put on the checkbox's label</dd>
+* <dt>xattr</dt><dd>optional additional attributes to include with the checkbox</dd>
+* <dt>break</dt><dd>optional break to use after the checkbox, if not supplied, will revert to the 'break' value included in $items</dd>
+* </dl>
+*
+* The items array may contain the following keys to control the checkbox group:
+* <dl>
+* <dt>break</dt><dd>string to insert in between checkboxes, defaults to br element</dd>
+* <dt>help</dt><dd>text that will be wrapped in a 'p' element between the label and the checkbox group</dd>
+* <dt>help-id</dt><dd>optional id to put on the help paragraph</dd>
+* <dt>label-id</dt><dd>optional id to put on the outer label</dd>
+* <dt>selected</dt><dd>optional, which checkbox should be checked initially. Must match the `value` of one of the $boxes entries. Will be overridden by a session value, if one is set.</dd>
+* </dl>
 */
-	function addCheckboxes($label, $name, $boxes, $items=array()) { // boxes is an array of checkbox items, each item is an array such as: array('value'=>'', 'selected'=>true/false, 'xattr'=>'', 'label'=>'', 'break'=>'', ); $label is the outer label for the entire group; $items are other stuff, such as 'help' and 'break', that will display for the entire group; 'value' is the text that will be returned if the checkbox is marked, should be unique, and those values will be combined and returned as an array
-		//NOTE: this works for one checkbox, but it is intended for a group of checkboxes and the values will be collected in an array under $_POST[$name]
-		//NOTE: so the name of each checkbox will be $name.'[]'
-		//NOTE: we create an id (using 'name-value' to hopefully be unique) to link the checkbox and the label so clicking on the label will toggle the checkbox
-		if ($label) { $this->middle .= '<p class="lbl"><label>' . $label . '</label>' . self::getSessionError($name) . '</p>'; }
-		if ($items['help']) { $this->middle .= '<p class="help">' . $items['help'] . '</p>'; }
+	function addCheckboxes($label, $name, $boxes, $items=array()) {
+		if ($label) {
+			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
+			$this->composer->endElement();
+		}
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$break = $items['break'] or $break = '<br />';
-		$this->middle .= '<p class="inp">';
+		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		foreach ($boxes as $box) {
-			if ($this->sessionValue($name)) { $box['selected'] = in_array($box['value'], $this->sessionValue($name)); }
-			$this->middle .= ( $doneOne ? ( $box['break'] ? $box['break'] : $break ) : '' ) . '<input type="checkbox" name="' . $name . '[]" value="' . $box['value'] . '" id="' . $name . '-' . $box['value'] . '" ' . ( $box['selected'] ? 'checked="checked"' : '' ) . ' ' . $box['xattr'] . '>&nbsp;<label for="' . $name . '-' . $box['value'] . '">' . $box['label'] . '</label>';
+			if ($this->sessionValue($name)) { $box['selected'] = (in_array($box['value'], $this->sessionValue($name))); }
+			else if ($items['selected']) { $box['selected'] = ($items['selected'] == $box['value']); }
+			$box['type'] = 'checkbox';
+			$box['name'] = $name . '[]';
+			$box['id'] = $name . '-' . $box['value'];
+			$box['checked'] = ( $box['selected'] ? 'checked' : '' );
+			if ($doneOne) { $this->composer->addCustom( $box['break'] ? $box['break'] : $break ); }
+			$this->composer->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
+			if ($box['label']) {
+				$this->composer->addCustom('&nbsp;');
+				$this->composer->addElement('label', array('for'=>$box['id'], 'id'=>$box['label-id']), $box['label']);
+			}
 			$doneOne = true;
 		}
-		$this->middle .= '</p>';
+		$this->composer->endElement();
 	}
 
 /**
+* Adds a single checkbox to the form.
+* @param string $label outer label for the checkbox
+* @param string $name form name for the checkbox, if the checkbox is selected, `value` will be returned in $_POST[$name]
+* @param array $items array of attributes to control the checkbox
 *
+* Some attributes are automatic: 'type' will be set to 'checkbox', 'id' will be a concatenation of 'name' and 'value'.
+*
+* Note, if the name has trailing brackets, `[]`, then PHP will return an array for $_POST[$name] that contains the values for any checked boxes that share the name.
+* You can also do `name[key]` as the name, and the checkbox value will be in $_POST[$name][$key].
+*
+* The $items array contains entries with the following keys:
+* <dl>
+* <dt>value</dt><dd>what is returned in $_POST[$name] if the checkbox is checked, defaults to 'true'</dd>
+* <dt>selected</dt><dd>flag indicating if this checkbox should be checked initially. Can be overridden by a session value.</dd>
+* <dt>label</dt><dd>optional, if supplied is the label that will appear next to the checkbox</dd>
+* <dt>label-id</dt><dd>optional id to put on the checkbox's label</dd>
+* <dt>outer-label-id</dt><dd>optional id to put on the outer label</dd>
+* <dt>xattr</dt><dd>optional additional attributes to include with the checkbox</dd>
+* <dt>help</dt><dd>text that will be wrapped in a 'p' element between the label and the checkbox</dd>
+* <dt>help-id</dt><dd>optional id to put on the help paragraph</dd>
+* </dl>
 */
-	function addCheckbox($label, $name, $items=array()) { // for a single checkbox, items is an array such as: array('value'=>'', 'selected'=>true/false, 'xattr'=>'', 'label'=>'', 'break'=>'', 'help'=>'', ); $label is the outer label for the form row;
-		//NOTE: this works for one checkbox, or for a group of checkboxes
-		//NOTE: for a group, make the name the same for each checkbox, with a trailing [] and PHP will treat them as an array, returning in the array the 'value' for any checked boxes
-		//NOTE: we create an id (using 'name') to link the checkbox and the label so clicking on the label will toggle the checkbox
-		if ($label) { $this->middle .= '<p class="lbl"><label>' . $label . '</label>' . self::getSessionError($name) . '</p>'; }
-		if ($items['help']) { $this->middle .= '<p class="help">' . $items['help'] . '</p>'; }
-		$this->middle .= '<p class="inp">';
+	function addCheckbox($label, $name, $items=array()) {
+		if ($label) {
+			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->addElement('label', array('id'=>$items['outer-label-id'], ), $label . self::getSessionError($name));
+			$this->composer->endElement();
+		}
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		if ($this->sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)$this->sessionValue($name)); }
+		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
 		if (!$items['value']) { $items['value'] = 'true'; }
-		if ($this->sessionValue($name)) { $items['selected'] = ($this->sessionValue($name)==$items['value']); } else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // false doesn't work as a sticky value, because $name won't be sent at all in $_POST
-		$this->middle .= '<input type="checkbox" name="' . $name . '" value="' . $items['value'] . '" id="' . $name . '" ' . ( $items['selected'] ? 'checked="checked"' : '' ) . ' ' . $items['xattr'] . '>&nbsp;<label for="' . $name . '">' . $items['label'] . '</label>';
-		$this->middle .= '</p>';
+		$items['type'] = 'checkbox';
+		$items['name'] = $name;
+		$items['id'] = $name . '-' . $items['value'];
+		$items['checked'] = ( $items['selected'] ? 'checked' : '' );
+		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
+		if ($items['label']) {
+			$this->composer->addCustom('&nbsp;');
+			$this->composer->addElement('label', array('for'=>$items['id'], 'id'=>$items['label-id']), $items['label']);
+		}
+		$this->composer->endElement();
 	}
 
 /**
-*
+* Adds a custom string to the internal HTML string.
 */
-	function getCheckbox($label, $name, $items=array()) { // returns the code for a bare checkbox, using $name and $label and optional $items=array('value'=>'', 'selected'=>true/false, 'array'=>true/false, 'xattr'=>'', ) // where value is the desired value to return in POST, select determines whether or not it is selected (and will be overridden by value, if any, in the session), and 'array' is a flag indicating whether or not the name should be suffixed with '[]'
-		if (!$items['value']) { $items['value'] = 'true'; }
-		if ($items['array'] && $this->sessionValue($name)) { $items['selected'] = in_array($items['value'], $this->sessionValue($name)); }
-		else if ($this->sessionValue($name)) { $items['selected'] = ($this->sessionValue($name)==$items['value']); }
-		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; }
-		if ($this->sessionValue($name)) { $items['selected'] = ( $items['array'] ? in_array($items['value'], $this->sessionValue($name)) : $this->sessionValue($name)==$items['value'] ); }
-		$id = $name . ( $items['array'] ? '-' . $items['value'] : '' );
-		return '<input type="checkbox" name="' . $name . ( $items['array'] ? '[]' : '' ) . '" value="' . $items['value'] . '" id="' . $id . '" ' . ( $items['selected'] ? 'checked="checked"' : '' ) . ' ' . $items['xattr'] . '>&nbsp;<label for="' . $id . '">' . $label . '</label>';
-	}
+	function addCustom($string) { $this->composer->addCustom($string); }
 
 /**
-*
-*/
-	function addCustom($string) { $this->middle .= $string; }
-
-/**
-* Adds a statement and example about entering dates.
-* Uses the class 'eg' by default, but another can be supplied by callers or by subclassers.
-* @param string $class the class to use for the date example, defaults to 'eg'
-*/
-	function addDateSample($class='eg') {
-		$this->composer->addCustom('Enter dates using a YYYY-MM-DD HH:MM:SS format (24-hour clock). For example, today would be: ');
-		$this->composer->addTag('span', $class, null, date('Y-m-d H:i:s'));
-	}
-
-/**
-*
+* Returns the HTML string that was created with prior calls to all the other functions in this class.
 */
 	function getForm() {
 		unset($_SESSION[self::SKEY_ERRORS]);
 		unset($_SESSION[self::SKEY_VALUES]);
-		return '<form method="' . $this->method . '" action="' . $this->action . '"' . ( $this->enctype ? ' enctype="' . $this->enctype . '"' : '' ) . '>' . $this->middle . '</form>';
+		return '<form method="' . $this->method . '" action="' . $this->action . '"' . ( $this->enctype ? ' enctype="' . $this->enctype . '"' : '' ) . '>' . $this->composer->getHTML() . '</form>';
 	}
 
-	// -----------------------------
-	// !handling file uploads
+//
+// !File uploads
+//
 
 /**
-*
+* Checks up/down/left/right that the user actually uploaded a file.
 */
-	static function didUpload($name) { return $_FILES[$name]['size']>0 && $_FILES[$name]['tmp_name'] && $_FILES[$name]['name'] && $_FILES[$name]['error']!=UPLOAD_ERR_NO_FILE; } // we check up and down, left and right, that the user actually attempted to upload a file
+	static function didUpload($name) { return $_FILES[$name]['size']>0 && $_FILES[$name]['tmp_name'] && $_FILES[$name]['name'] && $_FILES[$name]['error']!=UPLOAD_ERR_NO_FILE; }
 
 /**
 *
+* //TODO: we need to allow the document types to be a parameter, not hard-coded.
 */
 	static function handleFileUpload($name) {
 		global $client;

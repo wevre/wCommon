@@ -27,54 +27,53 @@ class wHTMLComposer {
 	}
 
 //
-// !Tags
+// !Elements
 //
 
 /**
-* Returns `true` if $tag is a self-closing tag, such as input or br.
+* Returns `true` if $elem is an empty element, such as 'input' or 'br'.
 */
-	protected function isSelfClosingTag($tag) {
-		return in_array($tag, array('area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', ));
+	protected static function isEmptyElement($elem) {
+		return in_array($elem, array('area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', ));
 	}
 
 /**
-* Begins an HTML tag and pushes it onto the stack.
-* Calls to this function must be balanced with later calls to $this->endTag, and can be nested.
-* Do not call this method with self-closing tags, such as input or br; use addTag() instead.
-* @uses getTag()
-* @see getTag() for description of the parameters.
+* Begins an HTML element with an opening tag and pushes it onto the tag stack.
+* Calls to this function must be balanced with later calls to $this->endElement, and can be nested.
+* Do not call this method with empty elements, such as 'input' or 'br'; use addElement() instead.
+* @uses getElement()
+* @see getElement() for description of the parameters.
 */
-	function beginTag($tag, $class='', $attribs=[], $content='') {
-		array_push($this->tagStack, $tag);
-		$this->middle .= self::getTag($tag, $class, $attribs, $content);
-		$this->registerClass($class);
+	function beginElement($elem, $attribs=[], $content='') {
+		array_push($this->tagStack, $elem);
+		$this->middle .= self::getElement($elem, $attribs, $content);
+		if ($class = $attribs['class']) { $this->registerClass($class); }
 	}
 
 /**
-* Adds an HTML tag with content and includes the closing tag.
-* Handles self-closing tags, in which case it doesn't add a closing tag, but the trailing slash.
-* @uses getTag()
-* @see getTag() for description of the parameters.
+* Adds an HTML element with content and includes the closing tag, or, if it is an empty element, the trailing slash.
+* @uses getElement()
+* @see getElement() for description of the parameters.
 */
-	function addTag($tag, $class='', $attribs=[], $content='') {
-		$this->middle .= self::getTag($tag, $class, $attribs, $content) . ( self::isSelfClosingTag($tag) ? ' />' : "</$tag>" );
-		$this->registerClass($class);
+	function addElement($elem, $attribs=[], $content='') {
+		$this->middle .= self::getElement($elem, $attribs, $content, true);
+		if ($class = $attribs['class']) { $this->registerClass($class); }
 	}
 
 /**
-* Adds custom string to the internal HTML string.
+* Adds a custom string to the internal HTML string.
 */
 	function addCustom($string) {
 		$this->middle .= $string;
 	}
 
 /**
-* Closes a previously opened HTML tag.
-* Calls to this function must be balanced with prior calls to $this->beginTag().
+* Closes a previously opened HTML element with a closing tag.
+* Calls to this function must be balanced with prior calls to $this->beginElement().
 */
-	function endTag() {
-		$tag = array_pop($this->tagStack);
-		$this->middle .= "</{$tag}>";
+	function endElement() {
+		$elem = array_pop($this->tagStack);
+		$this->middle .= "</{$elem}>";
 	}
 
 /**
@@ -88,18 +87,19 @@ class wHTMLComposer {
 	}
 
 /**
-* Returns a string of HTML with the open tag, any class or other attributes, and any content, but not the closing tag.
-* Class names passed in to the $class parameter are kept track of in an internal class cache.
+* Returns a string for an HTML element with the opening tag, any class or other attributes, and any content.
+* It will also return the closing tag if the $close parameter is true.
+* Any 'class' attribute will be kept track of in an internal class cache.
 * After using an instance of this class to compose HTML, one can query the instance to know which classes were referenced and make use of that information; for example, to determine which style files to include.
-* @param string $tag name of the HTML tag
-* @param string $class CSS class to add to the tag, defaults to empty string
-* @param array $attribs attributes (other than `class`) to add to the tag, defaults to an empty array; empty values can be passed in, they will be skipped
-* @param string $content text to add after the opening tag, defaults to empty string, is ignored if tag is self-closing
+* @param string $elem name of the HTML element
+* @param array $attribs attributes to add to the element, defaults to an empty array; empty values can be passed in, they will be skipped
+* @param string $content text to add after the opening tag, defaults to empty string, is ignored if element is empty (such as 'input' or 'br')
+* @param bool $close flag indicating whether the element should be closed, defaults to false
 */
-	protected static function getTag($tag, $class='', $attribs=[], $content='') {
-		$filtered = array_filter($attribs, function ($v) { return !empty($v); } );
-		$attribString = implode(' ', array_map(function($k, $v) { return "$k=\"$v\""; }, array_keys($filtered), $filtered));
-		return '<' . $tag . wrapIfCe($class, ' class="', '"') . prefixIfCe($attribString, ' ') . ( self::isSelfClosingTag($tag) ? '' : '>' . $content );
+	protected static function getElement($elem, $attribs=[], $content='', $close=false) {
+		$attribString = implode(' ', array_key_map(function($k, $v) { return "$k=\"$v\""; }, array_filter($attribs, function ($v) { return !empty($v); } )));
+		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
+		else { return '<' . $elem . prefixIfCe($attribString, ' ') . '>' . $content . ( $close ? "</$elem>" : '' ); }
 	}
 
 //
@@ -114,7 +114,7 @@ class wHTMLComposer {
 	}
 
 /**
-* Returns the list of classes that were referenced during calls to beginTag() or addTag().
+* Returns the list of classes that were referenced during calls to beginElement() or addElement().
 */
 	function getClasses() {
 		return array_keys($this->classCache);

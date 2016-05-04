@@ -41,8 +41,8 @@
 		<!--
 			The `wTemplate` class has functionality for stashing messages in the SESSION, and then displaying them on the next loaded page.
 			The "msg-wrap" id and "confirm" class below are placeholders. You can choose to set up style rules to flesh them out, or replace them completely, as there are no dependencies within `wTemplate`.
-			There is a dependency, however, on the template block `BLK-MSG` which is referenced in the `displayMessage` method of `wTemplate.
-			Note that for error messages, the default behavior of `wTemplate` is to add an additional class (via the `MSG-XCLASS` template variable) to further style an error message. See the constructor for `wTemplate` and the method `displayMessage` for more details.
+			There is a dependency, however, on the template block `BLK-MSG` which is referenced in the `displayMessage()` method of `wTemplate`.
+			Note that for error messages, the default behavior of `wTemplate` is to add an additional class (via the `MSG-XCLASS` template variable) to further style an error message. See the constructor for `wTemplate` and the method `displayMessage()` for more details.
 		-->
 		<div id="msg-wrap"><!-- BEGIN BLK-MSG --><div class="confirm {MSG-XCLASS}">{MSG}</div><!-- END BLK-MSG --></div>
 		<!-- END BLK-MESSAGES -->
