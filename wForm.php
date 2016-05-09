@@ -266,7 +266,7 @@ class wFormBuilder {
 */
 	function addText($label, $value) {
 		$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
-		$this->composer->addElement('label', null, $label);
+		$this->composer->addElement('label', [], $label);
 		$this->composer->endElement();
 		$this->composer->addElement('p', array('class'=>self::CLASS_INPUT), $value);
 	}
