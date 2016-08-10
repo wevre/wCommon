@@ -13,7 +13,7 @@
 *
 */
 
-//require_once 'wCommon/wStandard.php';
+require_once 'wCommon/wStandard.php';
 
 /**
 * Error function used to log diagnostic messages and errors when testing checksums and when uploading files.

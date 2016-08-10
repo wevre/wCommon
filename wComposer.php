@@ -13,7 +13,7 @@
 *
 */
 
-//require_once 'wCommon/wStandard.php';
+require_once 'wCommon/wStandard.php';
 
 /**
 * Helper class for composing HTML (or portions thereof).
@@ -92,11 +92,12 @@ class wHTMLComposer {
 * Any 'class' attribute will be kept track of in an internal class cache.
 * After using an instance of this class to compose HTML, one can query the instance to know which classes were referenced and make use of that information; for example, to determine which style files to include.
 * @param string $elem name of the HTML element
-* @param array $attribs attributes to add to the element, defaults to an empty array; empty values can be passed in, they will be skipped
+* @param array $attribs attributes to add to the element, defaults to an empty array; empty values can be passed in, they will be skipped. As a shortcut, if a string is supplied by the caller for the $attribs parameter, it will be interpreted as the 'class' attribute for the HTML element.
 * @param string $content text to add after the opening tag, defaults to empty string, is ignored if element is empty (such as 'input' or 'br')
 * @param bool $close flag indicating whether the element should be closed, defaults to false
 */
 	protected static function getElement($elem, $attribs=[], $content='', $close=false) {
+		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		$attribString = implode(' ', array_key_map(function($k, $v) { return "$k=\"$v\""; }, array_filter($attribs, function ($v) { return !empty($v); } )));
 		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
 		else { return '<' . $elem . prefixIfCe($attribString, ' ') . '>' . $content . ( $close ? "</$elem>" : '' ); }
