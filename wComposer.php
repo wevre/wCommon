@@ -45,6 +45,7 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function beginElement($elem, $attribs=[], $content='') {
+		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		array_push($this->tagStack, $elem);
 		$this->middle .= self::getElement($elem, $attribs, $content);
 		if ($class = $attribs['class']) { $this->registerClass($class); }
@@ -56,6 +57,7 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function addElement($elem, $attribs=[], $content='') {
+		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		$this->middle .= self::getElement($elem, $attribs, $content, true);
 		if ($class = $attribs['class']) { $this->registerClass($class); }
 	}

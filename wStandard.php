@@ -59,8 +59,7 @@ function w_error_log($ident, $type, $msg, $excp=null) {
 */
 function getURLPath($url=null) {
 	if (!$url) { $url = $_SERVER['REQUEST_URI']; }
-	$parsedUrl = parse_url($url);
-	return $parsedUrl['path'];
+	return parse_url($url, PHP_URL_PATH);
 }
 
 /**
