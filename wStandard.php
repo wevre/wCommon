@@ -94,7 +94,10 @@ function w_confirmServer($hostname, $https=false, $domain='www') {
 */
 function w_bailout($keys=[], $others=[], $target=null) {
 	if ($target && is_object($target) && method_exists($target, 'getFragment')) { $fragment = $target->getFragment(); }
-	header('Location: ' . getURLPath() . prefixIfCe(implode("&", array_map(function($k) { return "{$k}={$_REQUEST[$k]}"; }, array_filter($keys, function($k) { return $_REQUEST[$k]; }))), '?') . prefixIfCe(implode('&', array_map('keyParam', array_keys($others), $others)), '&') . prefixIfCe($fragment, '#'));
+	$query = [];
+	foreach ($keys as $key) { if ($_REQUEST[$key]) { $query[$key] = $_REQUEST[$key]; } }
+	foreach ($others as $key=>$value) { $query[$key] = $value; }
+	header('Location: ' . getURLPath() . prefixIfCe(implode('&', array_map('keyParam', array_keys($query), $query)), '?') . prefixIfCe($fragment, '#'));
 	exit;
 }
 
