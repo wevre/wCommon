@@ -107,8 +107,8 @@ class wTemplate extends Template {
 */
 	function addInlineScript($text) { $this->parseBlock('BLK-INLINE-SCRIPT', array('SCRIPT'=>$text, )); }
 
-/*
-*
+/**
+* Adds a snippet of javascript to the BODY element's onload="" attribute. Note that the onload attribute is surrounded by double quotes, so the javascript should only include single quotes.
 */
 	function addOnload($string) { $this->parseBlock('BLK-ONLOADS', array('ONLOAD'=>$string, )); }
 

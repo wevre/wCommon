@@ -115,6 +115,9 @@ class wFormBuilder {
 */
 	static function setSessionValue($name, $value) { $_SESSION[self::SKEY_VALUES][$name] = $value; }
 
+/** Clears the value in $_SESSION for the supplied $name. */
+	static function clearSessionValue($name) { unset($_SESSION[self::SKEY_VALUES][$name]); }
+
 /**
 * Returns the value associated with a named form element, as it is stored in $_SESSION.
 */
@@ -570,9 +573,9 @@ class wFormBuilder {
 		}
 		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		if (!$items['value']) { $items['value'] = 'true'; }
 		if ($this->sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)$this->sessionValue($name)); }
 		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
-		if (!$items['value']) { $items['value'] = 'true'; }
 		$items['type'] = 'checkbox';
 		$items['name'] = $name;
 		$items['id'] = $name . '-' . $items['value'];

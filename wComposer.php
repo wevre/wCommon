@@ -20,10 +20,11 @@ require_once 'wCommon/wStandard.php';
 */
 class wHTMLComposer {
 
+	const CLASSES_CACHE = 'CLASSES_CACHE';
+
 	function __construct() {
 		$this->middle = '';
 		$this->tagStack = [];
-		$this->classCache = [];
 	}
 
 //
@@ -45,10 +46,8 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function beginElement($elem, $attribs=[], $content='') {
-		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		array_push($this->tagStack, $elem);
 		$this->middle .= self::getElement($elem, $attribs, $content);
-		if ($class = $attribs['class']) { $this->registerClass($class); }
 	}
 
 /**
@@ -57,9 +56,7 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function addElement($elem, $attribs=[], $content='') {
-		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		$this->middle .= self::getElement($elem, $attribs, $content, true);
-		if ($class = $attribs['class']) { $this->registerClass($class); }
 	}
 
 /**
@@ -100,6 +97,7 @@ class wHTMLComposer {
 */
 	protected static function getElement($elem, $attribs=[], $content='', $close=false) {
 		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
+		if ($class = $attribs['class']) { self::registerClass($class); }
 		$attribString = implode(' ', array_key_map(function($k, $v) { return "$k=\"$v\""; }, array_filter($attribs, function ($v) { return !empty($v); } )));
 		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
 		else { return '<' . $elem . prefixIfCe($attribString, ' ') . '>' . $content . ( $close ? "</$elem>" : '' ); }
@@ -110,17 +108,24 @@ class wHTMLComposer {
 //
 
 /**
-* Inserts a class into the internal dictionary keeping track of class names.
+* Inserts a class into the global dictionary keeping track of class names.
 */
-	protected function registerClass($class) {
-		$this->classCache[$class] += 1;
+	protected static function registerClass($class) {
+		$GLOBALS[self::CLASSES_CACHE][$class] += 1;
 	}
 
 /**
 * Returns the list of classes that were referenced during calls to beginElement() or addElement().
 */
-	function getClasses() {
-		return array_keys($this->classCache);
+	static function getClasses() {
+		return array_keys($GLOBALS[self::CLASSES_CACHE]);
+	}
+
+/**
+* Clears the internal dictionary that is keeping track of class names that have been referenced.
+*/
+	static function resetClassesCache() {
+		$GLOBALS[self::CLASSES_CACHE] = [];
 	}
 
 //
@@ -132,13 +137,6 @@ class wHTMLComposer {
 */
 	function resetHTML() {
 		$this->middle = '';
-	}
-
-/**
-* Clears the internal dictionary that is keeping track of class names that have been referenced.
-*/
-	function resetClassCache() {
-		$this->classCache = [];
 	}
 
 }
