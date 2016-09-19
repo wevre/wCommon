@@ -67,6 +67,14 @@ function getURLPath($url=null) {
 */
 function keyParam($key, $val) { return $key . '=' . $val; }
 
+/** Returns !is_null($v) */
+function is_not_null($val) { return !is_null($val); }
+
+/** Returns the elements from $_REQUEST based on the keys in $keys. */
+function filter_request($keys) {
+	return array_intersect_key($_REQUEST, array_flip($keys));
+}
+
 /**
 * Confirms the requested URL and redirects if necessary.
 * Very useful to enforce HTTP or HTTPS.
@@ -94,10 +102,8 @@ function w_confirmServer($hostname, $https=false, $domain='www') {
 */
 function w_bailout($keys=[], $others=[], $target=null) {
 	if ($target && is_object($target) && method_exists($target, 'getFragment')) { $fragment = $target->getFragment(); }
-	$query = [];
-	foreach ($keys as $key) { if ($_REQUEST[$key]) { $query[$key] = $_REQUEST[$key]; } }
-	foreach ($others as $key=>$value) { $query[$key] = $value; }
-	header('Location: ' . getURLPath() . prefixIfCe(implode('&', array_map('keyParam', array_keys($query), $query)), '?') . prefixIfCe($fragment, '#'));
+	$query = array_merge(filter_request($keys), $others);
+	header('Location: ' . getURLPath() . prefixIfCe(implode('&', array_key_map('keyParam', array_filter($query, 'is_not_null'))), '?') . prefixIfCe($fragment, '#'));
 	exit;
 }
 

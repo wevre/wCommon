@@ -280,6 +280,7 @@ class wFormBuilder {
 * @param string $value value for the hidden field
 */
 	function addHiddenField($name, $value) {
+		if (is_null($value)) { return; }
 		$this->composer->addElement('input', array('type'=>'hidden', 'name'=>$name, 'value'=>$value, 'id'=>$name, ));
 	}
 
@@ -288,8 +289,8 @@ class wFormBuilder {
 * @param array $keys a list of keys that exist in $_REQUEST
 * @uses addHiddenField()
 */
-	function addHiddenKeys($keys=array()) {
-		foreach (array_filter($keys, function($k) { return $_REQUEST[$k]; }) as $key) { $this->addHiddenField($key, $_REQUEST[$key]); }
+	function addHiddenKeys($keys=[]) {
+		array_key_map([ $this, 'addHiddenField' ], filter_request($keys));
 	}
 
 /**
@@ -319,7 +320,7 @@ class wFormBuilder {
 		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
-		if (!$items['value']) { $items['value'] = ''; }
+		if (!$items['value']) { $items['value'] = null; }
 		if ($this->sessionValue($items['name'])) { $items['value'] = $this->sessionValue($items['name']); }
 		if (!$items['id']) { $items['id'] = $items['name']; }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
@@ -428,11 +429,11 @@ class wFormBuilder {
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		foreach ($radios as $radio) {
 			if ($this->sessionValue($name)) { $radio['selected'] = ($this->sessionValue($name) == $radio['value']); }
-			else if ($items['selected']) { $radio['selected'] = ($items['selected'] == $radio['value']); }
+			else if (!is_null($items['selected'])) { $radio['selected'] = ($items['selected'] == $radio['value']); }
 			$radio['type'] = 'radio';
 			$radio['name'] = $name;
 			$radio['id'] = $name . '-' . $radio['value'];
-			$radio['checked'] = ( $radio['selected'] ? 'checked' : '' );
+			$radio['checked'] = ( $radio['selected'] ? 'checked' : null );
 			if ($doneOne) { $this->composer->addCustom( $radio['break'] ? $radio['break'] : $break ); }
 			$this->composer->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
 			if ($radio['label']) {
@@ -478,8 +479,8 @@ class wFormBuilder {
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		$this->composer->beginElement('select', array_merge(array('name'=>$name, 'id'=>$items['id'], ), (array)$items['xattr']));
 		foreach ($menus as $menu) {
-			if ($this->sessionValue($name)) { $menu['selected'] = ( $this->sessionValue($name) == $menu['value'] ? 'selected' : '' ); }
-			else if ($items['selected']) { $menu['selected'] = ( $items['selected'] == $menu['value'] ? 'selected' : '' ); }
+			if ($this->sessionValue($name)) { $menu['selected'] = ( $this->sessionValue($name) == $menu['value'] ? 'selected' : null ); }
+			else if (!is_null($items['selected'])) { $menu['selected'] = ( $items['selected'] == $menu['value'] ? 'selected' : null ); }
 			if (!$menu['label']) { $menu['label'] = $menu['value']; }
 			$this->composer->addElement('option', array_intersect_key($menu,array_flip(['value', 'selected'])), $menu['label']);
 		}
@@ -530,7 +531,7 @@ class wFormBuilder {
 			$box['type'] = 'checkbox';
 			$box['name'] = $name . '[]';
 			$box['id'] = $name . '-' . $box['value'];
-			$box['checked'] = ( $box['selected'] ? 'checked' : '' );
+			$box['checked'] = ( $box['selected'] ? 'checked' : null );
 			if ($doneOne) { $this->composer->addCustom( $box['break'] ? $box['break'] : $break ); }
 			$this->composer->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
 			if ($box['label']) {
@@ -579,7 +580,7 @@ class wFormBuilder {
 		$items['type'] = 'checkbox';
 		$items['name'] = $name;
 		$items['id'] = $name . '-' . $items['value'];
-		$items['checked'] = ( $items['selected'] ? 'checked' : '' );
+		$items['checked'] = ( $items['selected'] ? 'checked' : null );
 		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
 		if ($items['label']) {
 			$this->composer->addCustom('&nbsp;');
