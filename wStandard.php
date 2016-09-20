@@ -67,6 +67,9 @@ function getURLPath($url=null) {
 */
 function keyParam($key, $val) { return $key . '=' . $val; }
 
+/** Returns the key and value joined by an equal sign, and the value wrapped in double quotes, just right for the attributes of an HTML entity. */
+function attribParam($key, $val) { return "$key=\"$val\""; }
+
 /** Returns !is_null($v) */
 function is_not_null($val) { return !is_null($val); }
 

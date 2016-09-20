@@ -321,7 +321,7 @@ class wFormBuilder {
 		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
 		if (!$items['value']) { $items['value'] = null; }
-		if ($this->sessionValue($items['name'])) { $items['value'] = $this->sessionValue($items['name']); }
+		if ($this->sessionValue($items['name'])) { $items['value'] = htmlspecialchars($this->sessionValue($items['name']), ENT_QUOTES); }
 		if (!$items['id']) { $items['id'] = $items['name']; }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
@@ -360,7 +360,7 @@ class wFormBuilder {
 		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		if (!$items['rows']) { $items['rows'] = 5; }
 		if (!$items['id']) { $items['id'] = $items['name']; }
-		if ($this->sessionValue($items['name'])) { $items['value'] = $this->sessionValue($items['name']); }
+		if ($this->sessionValue($items['name'])) { $items['value'] = htmlspecialchars($this->sessionValue($items['name']), ENT_QUOTES); }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		$this->composer->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
 		$this->composer->endElement();
