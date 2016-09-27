@@ -82,9 +82,12 @@ class wFormBuilder {
 */
 	function __construct($action=null, $method='post') {
 		if (!$action) { $action = getURLPath(); }
-		$this->action = $action;
-		$this->method = $method;
+		$this->attribs = [ 'action'=>$action, 'method'=>$method, ];
 		$this->composer = new wHTMLComposer();
+	}
+
+	function setFormAttribute($key, $value) {
+		$this->attribs[$key] = $value;
 	}
 
 //
@@ -600,7 +603,7 @@ class wFormBuilder {
 	function getForm() {
 		unset($_SESSION[self::SKEY_ERRORS]);
 		unset($_SESSION[self::SKEY_VALUES]);
-		return '<form method="' . $this->method . '" action="' . $this->action . '"' . ( $this->enctype ? ' enctype="' . $this->enctype . '"' : '' ) . '>' . $this->composer->getHTML() . '</form>';
+		return '<form' . prefixIfCe(implode(' ', array_key_map('keyParam', array_filter($this->attribs, 'is_not_null'))), ' ') . '>' . $this->composer->getHTML() . '</form>';
 	}
 
 //

@@ -70,9 +70,9 @@ class wHTMLComposer {
 * Closes a previously opened HTML element with a closing tag.
 * Calls to this function must be balanced with prior calls to $this->beginElement().
 */
-	function endElement() {
+	function endElement($break=false) {
 		$elem = array_pop($this->tagStack);
-		$this->middle .= "</{$elem}>";
+		$this->middle .= "</{$elem}>" . ( $break ? "\n" : '' );
 	}
 
 /**
