@@ -80,14 +80,11 @@ class wFormBuilder {
 * @param string $action the URL where the from will be sent
 * @param string $method either 'post' or 'get', defaults to 'post'
 */
-	function __construct($action=null, $method='post') {
-		if (!$action) { $action = getURLPath(); }
-		$this->attribs = [ 'action'=>$action, 'method'=>$method, ];
+	function __construct($attribs) {
+		if (!$attribs['action']) { $attribs['action'] = getURLPath(); }
+		if (!$attribs['method']) { $attribs['method'] = 'post'; }
 		$this->composer = new wHTMLComposer();
-	}
-
-	function setFormAttribute($key, $value) {
-		$this->attribs[$key] = $value;
+		$this->composer->beginElement('form', $attribs);
 	}
 
 //
@@ -124,7 +121,7 @@ class wFormBuilder {
 /**
 * Returns the value associated with a named form element, as it is stored in $_SESSION.
 */
-	protected function sessionValue($name) { return $_SESSION[self::SKEY_VALUES][$name]; }
+	static function sessionValue($name) { return $_SESSION[self::SKEY_VALUES][$name]; }
 
 /**
 * Grabs the values in $_POST and saves them in $_SESSION.
@@ -324,7 +321,7 @@ class wFormBuilder {
 		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
 		if (!$items['value']) { $items['value'] = null; }
-		if ($this->sessionValue($items['name'])) { $items['value'] = htmlspecialchars($this->sessionValue($items['name']), ENT_QUOTES); }
+		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
 		if (!$items['id']) { $items['id'] = $items['name']; }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
@@ -363,7 +360,7 @@ class wFormBuilder {
 		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		if (!$items['rows']) { $items['rows'] = 5; }
 		if (!$items['id']) { $items['id'] = $items['name']; }
-		if ($this->sessionValue($items['name'])) { $items['value'] = htmlspecialchars($this->sessionValue($items['name']), ENT_QUOTES); }
+		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		$this->composer->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
 		$this->composer->endElement();
@@ -378,7 +375,7 @@ class wFormBuilder {
 * <dt>id</dt><dd>will default to a concatenation of name-value, so as to be unique</dd>
 * <dt>name</dt><dd>form name of the button, defaults to KEY_ACTION</dd>
 * <dt>value</dt><dd>Value for the button, goes with the name as the value passed back in the form POST data</dd>
-* <dt>display</dt><dd>title of the button that will display to the user</dd>
+* <dt>content</dt><dd>title of the button that will display to the user</dd>
 * <dt>xattr</dt><dd>additional attributes to include in the 'button' element, as an array of the form array('attrib-name'=>'attrib-value', ... )</dd>
 * </dl>
 */
@@ -388,7 +385,7 @@ class wFormBuilder {
 			if (!$items['type']) { $items['type'] = 'submit'; }
 			if (!$items['name']) { $items['name'] = self::KEY_ACTION; }
 			if (!$items['id']) { $items['id'] = $items['name'] . '-' . $items['value']; }
-			$this->composer->addElement('button', array_merge(array_intersect_key($items, array_flip(['type', 'id', 'name', 'value'])), (array)$items['xattr']), $items['display']);
+			$this->composer->addElement('button', array_merge(array_intersect_key($items, array_flip(['type', 'id', 'name', 'value'])), (array)$items['xattr']), $items['content']);
 		}
 		$this->composer->endElement();
 	}
@@ -431,7 +428,7 @@ class wFormBuilder {
 		$break = $items['break'] or $break = '<br />';
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		foreach ($radios as $radio) {
-			if ($this->sessionValue($name)) { $radio['selected'] = ($this->sessionValue($name) == $radio['value']); }
+			if (self::sessionValue($name)) { $radio['selected'] = (self::sessionValue($name) == $radio['value']); }
 			else if (!is_null($items['selected'])) { $radio['selected'] = ($items['selected'] == $radio['value']); }
 			$radio['type'] = 'radio';
 			$radio['name'] = $name;
@@ -440,7 +437,7 @@ class wFormBuilder {
 			if ($doneOne) { $this->composer->addCustom( $radio['break'] ? $radio['break'] : $break ); }
 			$this->composer->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
 			if ($radio['label']) {
-				$this->composer->addCustom('&nbsp;');
+				if (!$this->composer->doIndent) { $this->composer->addCustom('&nbsp;'); }
 				$this->composer->addElement('label', array('for'=>$radio['id'], 'id'=>$radio['label-id']), $radio['label']);
 			}
 			$doneOne = true;
@@ -482,8 +479,9 @@ class wFormBuilder {
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		$this->composer->beginElement('select', array_merge(array('name'=>$name, 'id'=>$items['id'], ), (array)$items['xattr']));
 		foreach ($menus as $menu) {
-			if ($this->sessionValue($name)) { $menu['selected'] = ( $this->sessionValue($name) == $menu['value'] ? 'selected' : null ); }
+			if (self::sessionValue($name)) { $menu['selected'] = ( self::sessionValue($name) == $menu['value'] ? 'selected' : null ); }
 			else if (!is_null($items['selected'])) { $menu['selected'] = ( $items['selected'] == $menu['value'] ? 'selected' : null ); }
+			$menu['selected'] = ( $menu['selected'] ? 'selected' : null );
 			if (!$menu['label']) { $menu['label'] = $menu['value']; }
 			$this->composer->addElement('option', array_intersect_key($menu,array_flip(['value', 'selected'])), $menu['label']);
 		}
@@ -529,7 +527,7 @@ class wFormBuilder {
 		$break = $items['break'] or $break = '<br />';
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		foreach ($boxes as $box) {
-			if ($this->sessionValue($name)) { $box['selected'] = (in_array($box['value'], $this->sessionValue($name))); }
+			if (self::sessionValue($name)) { $box['selected'] = (in_array($box['value'], self::sessionValue($name))); }
 			else if ($items['selected']) { $box['selected'] = ($items['selected'] == $box['value']); }
 			$box['type'] = 'checkbox';
 			$box['name'] = $name . '[]';
@@ -538,7 +536,7 @@ class wFormBuilder {
 			if ($doneOne) { $this->composer->addCustom( $box['break'] ? $box['break'] : $break ); }
 			$this->composer->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
 			if ($box['label']) {
-				$this->composer->addCustom('&nbsp;');
+				if (!$this->composer->doIndent) { $this->composer->addCustom('&nbsp;'); }
 				$this->composer->addElement('label', array('for'=>$box['id'], 'id'=>$box['label-id']), $box['label']);
 			}
 			$doneOne = true;
@@ -578,7 +576,7 @@ class wFormBuilder {
 		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
 		if (!$items['value']) { $items['value'] = 'true'; }
-		if ($this->sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)$this->sessionValue($name)); }
+		if (self::sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)self::sessionValue($name)); }
 		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
 		$items['type'] = 'checkbox';
 		$items['name'] = $name;
@@ -586,7 +584,7 @@ class wFormBuilder {
 		$items['checked'] = ( $items['selected'] ? 'checked' : null );
 		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
 		if ($items['label']) {
-			$this->composer->addCustom('&nbsp;');
+			if (!$this->composer->doIndent) { $this->composer->addCustom('&nbsp;'); }
 			$this->composer->addElement('label', array('for'=>$items['id'], 'id'=>$items['label-id']), $items['label']);
 		}
 		$this->composer->endElement();
@@ -603,7 +601,8 @@ class wFormBuilder {
 	function getForm() {
 		unset($_SESSION[self::SKEY_ERRORS]);
 		unset($_SESSION[self::SKEY_VALUES]);
-		return '<form' . prefixIfCe(implode(' ', array_key_map('keyParam', array_filter($this->attribs, 'is_not_null'))), ' ') . '>' . $this->composer->getHTML() . '</form>';
+		$this->composer->endElement(); //<FORM>
+		return $this->composer->getHTML();
 	}
 
 //

@@ -190,7 +190,7 @@ function getTimeDisplay($timestamp=null, $sep='&nbsp;') {
 	$test = date('g:i', $timestamp);
 	if ($test == '12:00') { return 'noon'; }
 	else if ($test == '00:00') { return 'midnight'; }
-	return ( '00' == substr($test, 3) ?  substr($test, 0, 3) : $test ) . $sep . '<span class="ampm">' . date('a', $timestamp) . '</span>';
+	return ( '00' == substr($test, -2) ?  substr($test, 0, -3) : $test ) . $sep . '<span class="ampm">' . date('a', $timestamp) . '</span>';
 }
 
 /**

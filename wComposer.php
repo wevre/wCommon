@@ -27,6 +27,8 @@ class wHTMLComposer {
 		$this->tagStack = [];
 	}
 
+	public $doIndent = true;
+
 //
 // !Elements
 //
@@ -46,8 +48,9 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function beginElement($elem, $attribs=[], $content='') {
+		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
 		array_push($this->tagStack, $elem);
-		$this->middle .= self::getElement($elem, $attribs, $content);
+		$this->middle .= $indent . self::getElement($elem, $attribs, $content);
 	}
 
 /**
@@ -56,7 +59,8 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function addElement($elem, $attribs=[], $content='') {
-		$this->middle .= self::getElement($elem, $attribs, $content, true);
+		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		$this->middle .= $indent . self::getElement($elem, $attribs, $content, true);
 	}
 
 /**
@@ -70,9 +74,11 @@ class wHTMLComposer {
 * Closes a previously opened HTML element with a closing tag.
 * Calls to this function must be balanced with prior calls to $this->beginElement().
 */
-	function endElement($break=false) {
+	function endElement() {
 		$elem = array_pop($this->tagStack);
-		$this->middle .= "</{$elem}>" . ( $break ? "\n" : '' );
+		if (!$elem) { throw new Exception('Too many calls to endElement'); }
+		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		$this->middle .= $indent . "</{$elem}>";
 	}
 
 /**
