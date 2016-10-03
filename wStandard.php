@@ -274,6 +274,7 @@ function areYouSure($item) {
 *
 */
 function actionLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', ), 'title' is optional and defaults to 'display' //NOTE: creates a sequence of <a> elements which should be wrapped in a parent with class="ibwrap", also makes use of class .hide
+	//TODO: implement this with Composer and change 'display' into 'content'
 	if (!count($links)) { return ''; }
 	foreach ($links as $item) {
 		if (!$item) { continue; }

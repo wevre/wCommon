@@ -80,7 +80,7 @@ class wFormBuilder {
 * @param string $action the URL where the from will be sent
 * @param string $method either 'post' or 'get', defaults to 'post'
 */
-	function __construct($attribs) {
+	function __construct($attribs=[]) {
 		if (!$attribs['action']) { $attribs['action'] = getURLPath(); }
 		if (!$attribs['method']) { $attribs['method'] = 'post'; }
 		$this->composer = new wHTMLComposer();
