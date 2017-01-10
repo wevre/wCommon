@@ -54,7 +54,7 @@ class wFormBuilder {
 	const CLASS_EG = 'eg';
 
 // Constants for controlling how form data will be scrubbed.
-	const ENCODE_HTML = 'encode-html';
+	const ENCODE_HTML = 'encode-html'; // Converts `&`, `"`, `<` and `>` using htmlspecialchars(). Note it does not convert single quotes `'`
 	const STRIP_ALL_TAGS = 'strip-all-tags';
 	const NO_SPEC_CHARS = 'no-spec-chars';
 	const MUST_EXIST = 'must-exist';
@@ -442,7 +442,7 @@ class wFormBuilder {
 			}
 			$doneOne = true;
 		}
-		$this->composer->endElement();
+		$this->composer->endElement(); // <P>
 	}
 
 /**
