@@ -20,7 +20,7 @@ require_once 'wCommon/wStandard.php';
 */
 class wHTMLComposer {
 
-	const CLASSES_CACHE = 'CLASSES_CACHE';
+	const CACHE_CLASSES = 'CACHE_CLASSES';
 
 	function __construct() {
 		$this->middle = '';
@@ -50,7 +50,7 @@ class wHTMLComposer {
 	function beginElement($elem, $attribs=[], $content='') {
 		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
 		array_push($this->tagStack, $elem);
-		$this->middle .= $indent . self::getElement($elem, $attribs, $content);
+		$this->middle .= $indent . static::getElement($elem, $attribs, $content);
 	}
 
 /**
@@ -60,7 +60,7 @@ class wHTMLComposer {
 */
 	function addElement($elem, $attribs=[], $content='') {
 		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
-		$this->middle .= $indent . self::getElement($elem, $attribs, $content, true);
+		$this->middle .= $indent . static::getElement($elem, $attribs, $content, true);
 	}
 
 /**
@@ -117,21 +117,21 @@ class wHTMLComposer {
 * Inserts a class into the global dictionary keeping track of class names.
 */
 	protected static function registerClass($class) {
-		$GLOBALS[self::CLASSES_CACHE][$class] += 1;
+		$GLOBALS[self::CACHE_CLASSES][$class] += 1;
 	}
 
 /**
 * Returns the list of classes that were referenced during calls to beginElement() or addElement().
 */
 	static function getClasses() {
-		return array_keys($GLOBALS[self::CLASSES_CACHE]);
+		return array_keys($GLOBALS[self::CACHE_CLASSES]);
 	}
 
 /**
 * Clears the internal dictionary that is keeping track of class names that have been referenced.
 */
 	static function resetClassesCache() {
-		$GLOBALS[self::CLASSES_CACHE] = [];
+		$GLOBALS[self::CACHE_CLASSES] = [];
 	}
 
 //

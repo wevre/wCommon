@@ -255,7 +255,7 @@ class wFormBuilder {
 * @param string $class the class to use for the date example, defaults to 'eg'
 */
 	static function getDateSample() {
-		return 'Enter dates using a YYYY-MM-DD HH:MM:SS format (24-hour clock). For example, today would be: <span class="' . self::CLASS_EG . '">' . date('Y-m-d H:i:s') . '</span>';
+		return 'Enter dates using a YYYY-MM-DD HH:MM:SS format (24-hour clock). For example, today would be: <span class="' . static::CLASS_EG . '">' . date('Y-m-d H:i:s') . '</span>';
 	}
 
 //
@@ -268,10 +268,10 @@ class wFormBuilder {
 * @param string $value the text itself
 */
 	function addText($label, $value) {
-		$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+		$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 		$this->composer->addElement('label', [], $label);
 		$this->composer->endElement();
-		$this->composer->addElement('p', array('class'=>self::CLASS_INPUT), $value);
+		$this->composer->addElement('p', array('class'=>static::CLASS_INPUT), $value);
 	}
 
 /**
@@ -313,17 +313,17 @@ class wFormBuilder {
 */
 	function addInputField($items) {
 		if ($items['label']) {
-			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 			$this->composer->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
 			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
 		if (!$items['value']) { $items['value'] = null; }
 		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
 		if (!$items['id']) { $items['id'] = $items['name']; }
-		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
 		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
 		$this->composer->endElement();
 	}
@@ -353,15 +353,15 @@ class wFormBuilder {
 			$this->addHiddenField($items['name'] . self::HASH_SUFFIX, substr(sha1(trim($items['value'])), self::HASH_LEN));
 		}
 		if ($items['label']) {
-			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 			$this->composer->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
 			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		if (!$items['rows']) { $items['rows'] = 5; }
 		if (!$items['id']) { $items['id'] = $items['name']; }
 		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
-		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
 		$this->composer->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
 		$this->composer->endElement();
 	}
@@ -420,13 +420,13 @@ class wFormBuilder {
 */
 	function addRadios($label, $name, $radios, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
 			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$break = $items['break'] or $break = '<br />';
-		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
 		foreach ($radios as $radio) {
 			if (self::sessionValue($name)) { $radio['selected'] = (self::sessionValue($name) == $radio['value']); }
 			else if (!is_null($items['selected'])) { $radio['selected'] = ($items['selected'] == $radio['value']); }
@@ -471,12 +471,12 @@ class wFormBuilder {
 */
 	function addSelect($label, $name, $menus, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
 			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
-		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
 		$this->composer->beginElement('select', array_merge(array('name'=>$name, 'id'=>$items['id'], ), (array)$items['xattr']));
 		foreach ($menus as $menu) {
 			if (self::sessionValue($name)) { $menu['selected'] = ( self::sessionValue($name) == $menu['value'] ? 'selected' : null ); }
@@ -519,13 +519,13 @@ class wFormBuilder {
 */
 	function addCheckboxes($label, $name, $boxes, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
 			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$break = $items['break'] or $break = '<br />';
-		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
 		foreach ($boxes as $box) {
 			if (self::sessionValue($name)) { $box['selected'] = (in_array($box['value'], self::sessionValue($name))); }
 			else if ($items['selected']) { $box['selected'] = ($items['selected'] == $box['value']); }
@@ -569,12 +569,12 @@ class wFormBuilder {
 */
 	function addCheckbox($label, $name, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>self::CLASS_LABEL));
+			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
 			$this->composer->addElement('label', array('id'=>$items['outer-label-id'], ), $label . self::getSessionError($name));
 			$this->composer->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>self::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
-		$this->composer->beginElement('p', array('class'=>self::CLASS_INPUT));
+		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
 		if (!$items['value']) { $items['value'] = 'true'; }
 		if (self::sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)self::sessionValue($name)); }
 		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.

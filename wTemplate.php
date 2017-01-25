@@ -115,6 +115,7 @@ class wTemplate extends Template {
 	// -----------------------------
 	// !handling messages and items in the main section of the page
 	//NOTE: assumes the presence of the script-fader.js script
+	//TODO: this needs to NOT be the default. If installations want to use jQuery they can override and offer the functionality, but the default should not use it.
 
 /*
 *
