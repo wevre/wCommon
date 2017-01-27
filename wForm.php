@@ -42,6 +42,8 @@ function normalizeLineEndings(&$s) {
 */
 class wFormBuilder {
 
+	public $fDebug = false;
+
 // Constants for storing form errors and values in $_SESSION.
 	const SKEY_ERRORS = 'form-errors';
 	const SKEY_VALUES = 'form-values';
@@ -71,7 +73,7 @@ class wFormBuilder {
 * An instance of wHTMLComposer for generating HTML.
 * A new composer will be created when a new class instance is created, but users can replace it with their own if desired.
 */
-	public $composer;
+	public $composer; //TODO: This variable name should be $cp because that is my standard tag for a Composer.
 
 /**
 * Creates a new wFormBuilder.
@@ -437,7 +439,7 @@ class wFormBuilder {
 			if ($doneOne) { $this->composer->addCustom( $radio['break'] ? $radio['break'] : $break ); }
 			$this->composer->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
 			if ($radio['label']) {
-				if (!$this->composer->doIndent) { $this->composer->addCustom('&nbsp;'); }
+				if (!$this->composer->fIndent) { $this->composer->addCustom('&nbsp;'); }
 				$this->composer->addElement('label', array('for'=>$radio['id'], 'id'=>$radio['label-id']), $radio['label']);
 			}
 			$doneOne = true;
@@ -536,7 +538,7 @@ class wFormBuilder {
 			if ($doneOne) { $this->composer->addCustom( $box['break'] ? $box['break'] : $break ); }
 			$this->composer->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
 			if ($box['label']) {
-				if (!$this->composer->doIndent) { $this->composer->addCustom('&nbsp;'); }
+				if (!$this->composer->fIndent) { $this->composer->addCustom('&nbsp;'); }
 				$this->composer->addElement('label', array('for'=>$box['id'], 'id'=>$box['label-id']), $box['label']);
 			}
 			$doneOne = true;
@@ -584,7 +586,7 @@ class wFormBuilder {
 		$items['checked'] = ( $items['selected'] ? 'checked' : null );
 		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
 		if ($items['label']) {
-			if (!$this->composer->doIndent) { $this->composer->addCustom('&nbsp;'); }
+			if (!$this->composer->fIndent) { $this->composer->addCustom('&nbsp;'); }
 			$this->composer->addElement('label', array('for'=>$items['id'], 'id'=>$items['label-id']), $items['label']);
 		}
 		$this->composer->endElement();

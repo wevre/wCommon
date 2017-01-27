@@ -20,14 +20,15 @@ require_once 'wCommon/wStandard.php';
 */
 class wHTMLComposer {
 
+	public $fIndent = true;
+	public $fDebug = false;
+
 	const CACHE_CLASSES = 'CACHE_CLASSES';
 
 	function __construct() {
 		$this->middle = '';
 		$this->tagStack = [];
 	}
-
-	public $doIndent = true;
 
 //
 // !Elements
@@ -48,7 +49,7 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function beginElement($elem, $attribs=[], $content='') {
-		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		if ($this->fIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
 		array_push($this->tagStack, $elem);
 		$this->middle .= $indent . static::getElement($elem, $attribs, $content);
 	}
@@ -59,7 +60,7 @@ class wHTMLComposer {
 * @see getElement() for description of the parameters.
 */
 	function addElement($elem, $attribs=[], $content='') {
-		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		if ($this->fIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
 		$this->middle .= $indent . static::getElement($elem, $attribs, $content, true);
 	}
 
@@ -77,7 +78,7 @@ class wHTMLComposer {
 	function endElement() {
 		$elem = array_pop($this->tagStack);
 		if (!$elem) { throw new Exception('Too many calls to endElement'); }
-		if ($this->doIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		if ($this->fIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
 		$this->middle .= $indent . "</{$elem}>";
 	}
 
