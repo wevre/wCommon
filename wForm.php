@@ -18,7 +18,7 @@ require_once 'wCommon/wStandard.php';
 /**
 * Error function used to log diagnostic messages and errors when testing checksums and when uploading files.
 */
-function form_error_log($msg, $excp=null) { /*w_error_log(null, 'FORM', $msg, $excp);*/ }
+function form_error_log($msg, $excp=null) { if (wFormBuilder::$fDebug) { w_error_log(null, 'FORM', $msg, $excp); } }
 
 /**
 * Function to display different line endings. Used by debug logic in the checksum methods.
@@ -28,11 +28,11 @@ function showLineEndings($string) { form_error_log(str_replace(array("\r\n", "\n
 /**
 * Converts all line endings to UNIX format and reduces to no more than two in succession.
 */
-function normalizeLineEndings(&$s) {
+function normalizedLineEndings($s) {
 		$s = str_replace("\r\n", "\n", $s);
 		$s = str_replace("\r", "\n", $s);
 		$s = preg_replace("/\n{2,}/", "\n\n", $s);
-		//showLineEndings($s);
+		return $s;
 }
 
 /**
@@ -42,7 +42,7 @@ function normalizeLineEndings(&$s) {
 */
 class wFormBuilder {
 
-	public $fDebug = false;
+	public static $fDebug = false;
 
 // Constants for storing form errors and values in $_SESSION.
 	const SKEY_ERRORS = 'form-errors';
@@ -68,12 +68,13 @@ class wFormBuilder {
 
 	const HASH_SUFFIX = '-hash';
 	const HASH_LEN = -7; // Will be used with substr function to take the last n characters of the hash.
+	const NORMALIZED_SUFFIX = '-normalized';
 
 /**
 * An instance of wHTMLComposer for generating HTML.
 * A new composer will be created when a new class instance is created, but users can replace it with their own if desired.
 */
-	public $composer; //TODO: This variable name should be $cp because that is my standard tag for a Composer.
+	public $cp;
 
 /**
 * Creates a new wFormBuilder.
@@ -85,8 +86,8 @@ class wFormBuilder {
 	function __construct($attribs=[]) {
 		if (!$attribs['action']) { $attribs['action'] = getURLPath(); }
 		if (!$attribs['method']) { $attribs['method'] = 'post'; }
-		$this->composer = new wHTMLComposer();
-		$this->composer->beginElement('form', $attribs);
+		$this->cp = new wHTMLComposer();
+		$this->cp->beginElement('form', $attribs);
 	}
 
 //
@@ -143,7 +144,7 @@ class wFormBuilder {
 * @param string $value the value to test for uniqueness
 * @param string $name the form name associated with this value; also where an error will be set if needed
 */
-	static function testUniqueKey($cnxn, $gname, $value, $name) { // finds the value of $_POST[$name] and checks if it is a unique key in the database, setting an error if it is not
+	static function testUniqueKey($cnxn, $gname, $value, $name) {
 		if (!$cnxn->isUniqueKey($gname, $value)) { self::setSessionError($name, 'Must be unique'); return false; }
 		else { return true; }
 	}
@@ -197,24 +198,36 @@ class wFormBuilder {
 	}
 
 /**
-* Returns true if the sha1 hash value of $value matches the hash stored in $_POST[$name . HASH_SUFFIX].
-* This method will first normalize the line endings of $value before testing for a matching hash.
+* Returns true if the sha1 hash value of $_POST[$name] matches the hash stored in $_POST[$name . HASH_SUFFIX].
+* When you first create the form, add a text area with `addTextArea` and include the 'checksum' flag. Then this function is used on the back end to examine the results in $_POST versus the original checksum.
 * Typical use looks something like this, where we test if the hashes match and if not, update the value on our internal object.
 * <code>
-* wFormBuilder::testChecksum(POST_ESSAY, $val = trim($_POST[POST_ESSAY])) or $myObject->essay = $val;
+* wFormBuilder::testChecksum(POST_ESSAY) or $myObject->essay = wFormBuilder::getNormalized(POST_ESSAY);
 * </code>
 * In the above example, if the hashes match, then what we already have stored in our internal object is current, no need to update.
 * This is especially useful if a changed value triggers a lot of extra processing.
 * If the hashes match, it means we round-tripped the form with no updates to this particular field and we can skip the extra processing.
+* If the hash doesn't match, we can store the new value, or we can store the new value after its line endings have been normalized, by using the `getNormalized` function below.
 * @param string $name a form element name
 * @param string $value the value to examine
 */
-	static function testChecksum($name, $value) {
-		if (!$value) { return false; }
-		normalizeLineEndings($value);
-		$val = ($_POST[$name . self::HASH_SUFFIX] == substr(sha1($value), self::HASH_LEN));
+	static function testChecksum($name) {
+		$normalized = normalizedLineEndings(trim($_POST[$name]));
+		$_POST[$name . self::NORMALIZED_SUFFIX] = $normalized;
+		$val = ($_POST[$name . self::HASH_SUFFIX] == substr(sha1($normalized), self::HASH_LEN));
 		form_error_log('for name ' . $name . ' checksum matches? ' . ( $val ? 'YES' : 'NO' ));
 		return $val;
+	}
+
+/** While testing the checksum, the form builder normalizes line endings and caches those in $_POST.
+* This function retrieves that normalized version (or creates it lazily if it was never created by a call to `testChecksum`.
+*/
+	static function getNormalized($name) {
+		if (array_key_exists($name . FormBuilder::NORMALIZED_SUFFIX, $_POST)) {
+			return $_POST[$name . FormBuilder::NORMALIZED_SUFFIX];
+		} else {
+			return normalizedLineEndings(trim($_POST[$name]));
+		}
 	}
 
 /**
@@ -270,10 +283,10 @@ class wFormBuilder {
 * @param string $value the text itself
 */
 	function addText($label, $value) {
-		$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-		$this->composer->addElement('label', [], $label);
-		$this->composer->endElement();
-		$this->composer->addElement('p', array('class'=>static::CLASS_INPUT), $value);
+		$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+		$this->cp->addElement('label', [], $label);
+		$this->cp->endElement();
+		$this->cp->addElement('p', array('class'=>static::CLASS_INPUT), $value);
 	}
 
 /**
@@ -283,7 +296,7 @@ class wFormBuilder {
 */
 	function addHiddenField($name, $value) {
 		if (is_null($value)) { return; }
-		$this->composer->addElement('input', array('type'=>'hidden', 'name'=>$name, 'value'=>$value, 'id'=>$name, ));
+		$this->cp->addElement('input', array('type'=>'hidden', 'name'=>$name, 'value'=>$value, 'id'=>$name, ));
 	}
 
 /**
@@ -315,19 +328,19 @@ class wFormBuilder {
 */
 	function addInputField($items) {
 		if ($items['label']) {
-			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-			$this->composer->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
-			$this->composer->endElement();
+			$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+			$this->cp->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
+			$this->cp->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
 		if (!$items['value']) { $items['value'] = null; }
 		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
 		if (!$items['id']) { $items['id'] = $items['name']; }
-		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
-		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
-		$this->composer->endElement();
+		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
+		$this->cp->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
+		$this->cp->endElement();
 	}
 
 /**
@@ -351,21 +364,20 @@ class wFormBuilder {
 */
 	function addTextArea($items) {
 		if ($items['checksum']) {
-			normalizeLineEndings($items['value']);
-			$this->addHiddenField($items['name'] . self::HASH_SUFFIX, substr(sha1(trim($items['value'])), self::HASH_LEN));
+			$this->addHiddenField($items['name'] . self::HASH_SUFFIX, substr(sha1(normalizedLineEndings(trim($items['value']))), self::HASH_LEN));
 		}
 		if ($items['label']) {
-			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-			$this->composer->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
-			$this->composer->endElement();
+			$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+			$this->cp->addElement('label', array('for'=>$items['name'], 'id'=>$items['label-id'], ), $items['label'] . self::getSessionError($items['name']));
+			$this->cp->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		if (!$items['rows']) { $items['rows'] = 5; }
 		if (!$items['id']) { $items['id'] = $items['name']; }
 		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
-		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
-		$this->composer->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
-		$this->composer->endElement();
+		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
+		$this->cp->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
+		$this->cp->endElement();
 	}
 
 /**
@@ -382,14 +394,14 @@ class wFormBuilder {
 * </dl>
 */
 	function addButtons($butts) {
-		$this->composer->beginElement('p');
+		$this->cp->beginElement('p');
 		foreach ($butts as $items) {
 			if (!$items['type']) { $items['type'] = 'submit'; }
 			if (!$items['name']) { $items['name'] = self::KEY_ACTION; }
 			if (!$items['id']) { $items['id'] = $items['name'] . '-' . $items['value']; }
-			$this->composer->addElement('button', array_merge(array_intersect_key($items, array_flip(['type', 'id', 'name', 'value'])), (array)$items['xattr']), $items['content']);
+			$this->cp->addElement('button', array_merge(array_intersect_key($items, array_flip(['type', 'id', 'name', 'value'])), (array)$items['xattr']), $items['content']);
 		}
-		$this->composer->endElement();
+		$this->cp->endElement();
 	}
 
 /**
@@ -422,13 +434,13 @@ class wFormBuilder {
 */
 	function addRadios($label, $name, $radios, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
-			$this->composer->endElement();
+			$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+			$this->cp->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
+			$this->cp->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$break = $items['break'] or $break = '<br />';
-		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
+		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
 		foreach ($radios as $radio) {
 			if (self::sessionValue($name)) { $radio['selected'] = (self::sessionValue($name) == $radio['value']); }
 			else if (!is_null($items['selected'])) { $radio['selected'] = ($items['selected'] == $radio['value']); }
@@ -436,15 +448,15 @@ class wFormBuilder {
 			$radio['name'] = $name;
 			$radio['id'] = $name . '-' . $radio['value'];
 			$radio['checked'] = ( $radio['selected'] ? 'checked' : null );
-			if ($doneOne) { $this->composer->addCustom( $radio['break'] ? $radio['break'] : $break ); }
-			$this->composer->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
+			if ($doneOne) { $this->cp->addCustom( $radio['break'] ? $radio['break'] : $break ); }
+			$this->cp->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
 			if ($radio['label']) {
-				if (!$this->composer->fIndent) { $this->composer->addCustom('&nbsp;'); }
-				$this->composer->addElement('label', array('for'=>$radio['id'], 'id'=>$radio['label-id']), $radio['label']);
+				if (!$this->cp->fIndent) { $this->cp->addCustom('&nbsp;'); }
+				$this->cp->addElement('label', array('for'=>$radio['id'], 'id'=>$radio['label-id']), $radio['label']);
 			}
 			$doneOne = true;
 		}
-		$this->composer->endElement(); // <P>
+		$this->cp->endElement(); // <P>
 	}
 
 /**
@@ -473,22 +485,22 @@ class wFormBuilder {
 */
 	function addSelect($label, $name, $menus, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
-			$this->composer->endElement();
+			$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+			$this->cp->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
+			$this->cp->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
-		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
-		$this->composer->beginElement('select', array_merge(array('name'=>$name, 'id'=>$items['id'], ), (array)$items['xattr']));
+		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
+		$this->cp->beginElement('select', array_merge(array('name'=>$name, 'id'=>$items['id'], ), (array)$items['xattr']));
 		foreach ($menus as $menu) {
 			if (self::sessionValue($name)) { $menu['selected'] = ( self::sessionValue($name) == $menu['value'] ? 'selected' : null ); }
 			else if (!is_null($items['selected'])) { $menu['selected'] = ( $items['selected'] == $menu['value'] ? 'selected' : null ); }
 			$menu['selected'] = ( $menu['selected'] ? 'selected' : null );
 			if (!$menu['label']) { $menu['label'] = $menu['value']; }
-			$this->composer->addElement('option', array_intersect_key($menu,array_flip(['value', 'selected'])), $menu['label']);
+			$this->cp->addElement('option', array_intersect_key($menu,array_flip(['value', 'selected'])), $menu['label']);
 		}
-		$this->composer->endElement();
-		$this->composer->endElement();
+		$this->cp->endElement();
+		$this->cp->endElement();
 	}
 
 /**
@@ -521,13 +533,13 @@ class wFormBuilder {
 */
 	function addCheckboxes($label, $name, $boxes, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-			$this->composer->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
-			$this->composer->endElement();
+			$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+			$this->cp->addElement('label', array('id'=>$items['label-id'], ), $label . self::getSessionError($name));
+			$this->cp->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		$break = $items['break'] or $break = '<br />';
-		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
+		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
 		foreach ($boxes as $box) {
 			if (self::sessionValue($name)) { $box['selected'] = (in_array($box['value'], self::sessionValue($name))); }
 			else if ($items['selected']) { $box['selected'] = ($items['selected'] == $box['value']); }
@@ -535,15 +547,15 @@ class wFormBuilder {
 			$box['name'] = $name . '[]';
 			$box['id'] = $name . '-' . $box['value'];
 			$box['checked'] = ( $box['selected'] ? 'checked' : null );
-			if ($doneOne) { $this->composer->addCustom( $box['break'] ? $box['break'] : $break ); }
-			$this->composer->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
+			if ($doneOne) { $this->cp->addCustom( $box['break'] ? $box['break'] : $break ); }
+			$this->cp->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
 			if ($box['label']) {
-				if (!$this->composer->fIndent) { $this->composer->addCustom('&nbsp;'); }
-				$this->composer->addElement('label', array('for'=>$box['id'], 'id'=>$box['label-id']), $box['label']);
+				if (!$this->cp->fIndent) { $this->cp->addCustom('&nbsp;'); }
+				$this->cp->addElement('label', array('for'=>$box['id'], 'id'=>$box['label-id']), $box['label']);
 			}
 			$doneOne = true;
 		}
-		$this->composer->endElement();
+		$this->cp->endElement();
 	}
 
 /**
@@ -571,12 +583,12 @@ class wFormBuilder {
 */
 	function addCheckbox($label, $name, $items=array()) {
 		if ($label) {
-			$this->composer->beginElement('p', array('class'=>static::CLASS_LABEL));
-			$this->composer->addElement('label', array('id'=>$items['outer-label-id'], ), $label . self::getSessionError($name));
-			$this->composer->endElement();
+			$this->cp->beginElement('p', array('class'=>static::CLASS_LABEL));
+			$this->cp->addElement('label', array('id'=>$items['outer-label-id'], ), $label . self::getSessionError($name));
+			$this->cp->endElement();
 		}
-		if ($items['help']) { $this->composer->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
-		$this->composer->beginElement('p', array('class'=>static::CLASS_INPUT));
+		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
+		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
 		if (!$items['value']) { $items['value'] = 'true'; }
 		if (self::sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)self::sessionValue($name)); }
 		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
@@ -584,18 +596,18 @@ class wFormBuilder {
 		$items['name'] = $name;
 		$items['id'] = $name . '-' . $items['value'];
 		$items['checked'] = ( $items['selected'] ? 'checked' : null );
-		$this->composer->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
+		$this->cp->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
 		if ($items['label']) {
-			if (!$this->composer->fIndent) { $this->composer->addCustom('&nbsp;'); }
-			$this->composer->addElement('label', array('for'=>$items['id'], 'id'=>$items['label-id']), $items['label']);
+			if (!$this->cp->fIndent) { $this->cp->addCustom('&nbsp;'); }
+			$this->cp->addElement('label', array('for'=>$items['id'], 'id'=>$items['label-id']), $items['label']);
 		}
-		$this->composer->endElement();
+		$this->cp->endElement();
 	}
 
 /**
 * Adds a custom string to the internal HTML string.
 */
-	function addCustom($string) { $this->composer->addCustom($string); }
+	function addCustom($string) { $this->cp->addCustom($string); }
 
 /**
 * Returns the HTML string that was created with prior calls to all the other functions in this class.
@@ -603,8 +615,8 @@ class wFormBuilder {
 	function getForm() {
 		unset($_SESSION[self::SKEY_ERRORS]);
 		unset($_SESSION[self::SKEY_VALUES]);
-		$this->composer->endElement(); //<FORM>
-		return $this->composer->getHTML();
+		$this->cp->endElement(); //<FORM>
+		return $this->cp->getHTML();
 	}
 
 //
@@ -625,7 +637,10 @@ class wFormBuilder {
 		do {
 			// error checking on the uploaded file
 			if (!$_FILES[$name]) { break; }
-			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
+			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) {
+				form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file');
+				break;
+			}
 			if (!in_array($_FILES[$name]['type'], array('image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/pjpeg'))) { self::setSessionError($name, 'Upload a PNG, JPEG, or GIF file only'); break; }
 			return $_FILES[$name]['tmp_name'];
 		} while (0);

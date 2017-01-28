@@ -104,6 +104,7 @@ class wHTMLComposer {
 */
 	protected static function getElement($elem, $attribs=[], $content='', $close=false) {
 		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
+		else if (!is_array($attribs)) { $attribs = []; }
 		if ($class = $attribs['class']) { self::registerClass($class); }
 		$attribString = implode(' ', array_key_map('attribParam', array_filter($attribs, 'is_not_null')));
 		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
