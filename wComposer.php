@@ -48,7 +48,7 @@ class wHTMLComposer {
 	* @see getElement() for description of the parameters.
 	*/
 	function beginElement($elem, $attribs=[], $content='') {
-		if ($this->fIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		if ($this->fIndent) { $indent = ( $this->middle ? PHP_EOL : '' ) . str_repeat("\t", count($this->tagStack)); }
 		array_push($this->tagStack, $elem);
 		$this->middle .= $indent . static::getElement($elem, $attribs, $content);
 	}
@@ -59,7 +59,7 @@ class wHTMLComposer {
 	* @see getElement() for description of the parameters.
 	*/
 	function addElement($elem, $attribs=[], $content='') {
-		if ($this->fIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
+		if ($this->fIndent) { $indent = ( $this->middle ? PHP_EOL : '' ) . str_repeat("\t", count($this->tagStack)); }
 		$this->middle .= $indent . static::getElement($elem, $attribs, $content, true);
 	}
 
