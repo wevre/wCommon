@@ -607,29 +607,25 @@ class wFormBuilder {
 	/** Checks up/down/left/right that the user actually uploaded a file. */
 	static function didUpload($name) { return $_FILES[$name]['size']>0 && $_FILES[$name]['tmp_name'] && $_FILES[$name]['name'] && $_FILES[$name]['error']!=UPLOAD_ERR_NO_FILE; }
 
-/**
-*
-* //TODO: we need to allow the document types to be a parameter, not hard-coded.
-*/
-	static function handleFileUpload($name) {
-		global $client;
+	static $TYPES_FILES = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/pjpeg', 'application/pdf');
+
+	/** Processes the uploaded file. */
+	static function handleFileUpload($name, $types=null) {
 		do {
-			// error checking on the uploaded file
+			if (!$types) { $types = self::$TYPES_FILES; }
+			// Check for errors.
 			if (!$_FILES[$name]) { break; }
-			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) {
-				form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file');
-				break;
-			}
-			if (!in_array($_FILES[$name]['type'], array('image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/pjpeg'))) { self::setSessionError($name, 'Upload a PNG, JPEG, or GIF file only'); break; }
+			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
+			if ($types && !in_array($_FILES[$name]['type'], $types)) { static::setSessionError($name, 'Invalid file type'); break; }
 			return $_FILES[$name]['tmp_name'];
 		} while (0);
-		// set an error if non c’è
-		if (!$_SESSION[self::SKEY_ERRORS][$name]) switch ($_FILES[$name]['error']) {
+		// Set an error message, if non c’è.
+		if (!$_SESSION[static::SKEY_ERRORS][$name]) switch ($_FILES[$name]['error']) {
 			case UPLOAD_ERR_INI_SIZE :
-			case UPLOAD_ERR_FORM_SIZE : self::setSessionError($name, 'Image file is too large. Please upload a smaller file.'); break;
-			case UPLOAD_ERR_PARTIAL : self::setSessionError($name, 'Image file was only partially uploaded'); break;
-			case UPLOAD_ERR_NO_FILE : self::setSessionError($name, 'No image file was uploaded'); break; // we shouldn't get this one, because we screened for it earlier
-			default : self::setSessionError($name, 'An error occurred. Please try again. If you keep getting an error, please contact the web master.'); break;
+			case UPLOAD_ERR_FORM_SIZE : static::setSessionError($name, 'File is too large. Please upload a smaller file.'); break;
+			case UPLOAD_ERR_PARTIAL : static::setSessionError($name, 'File was only partially uploaded'); break;
+			case UPLOAD_ERR_NO_FILE : static::setSessionError($name, 'No file was uploaded'); break; // we shouldn't get this one, because we screened for it earlier
+			default : static::setSessionError($name, 'An error occurred. Please try again. If you keep getting an error, please contact the web master.'); break;
 		}
 		return null;
 	}
