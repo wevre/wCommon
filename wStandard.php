@@ -19,10 +19,7 @@
 
 error_reporting(E_ALL ^ E_NOTICE ^ E_STRICT);
 
-/**
-* Returns a string with the information from the exception split out and labeled.
-* @param Exception $e
-*/
+/** Returns a string with the information from the exception split out and labeled. */
 function formatException($e) {
 	return "Exception {$e->getCode()}: {$e->getMessage()} (line: {$e->getline()} of {$e->getfile()})\n{$e->getTraceAsString()}\n";
 }
@@ -38,7 +35,7 @@ function formatException($e) {
 *     global $account;
 *     w_error_log( $account, $type, $msg, $excp);
 * }
-</code>
+* </code>
 * @param string $ident
 * @param string $type
 * @param string $msg
@@ -54,17 +51,22 @@ function w_error_log($ident, $type, $msg, $excp=null) {
 // !Site management functions
 //
 
-/**
-* Gets the 'path' portion of a URL, either a specific URL passed in as the single parameter; or, by default, the current request URI.
-*/
+/** Gets the 'path' portion of a URL, either a specific URL passed in as the single parameter; or, by default, the current request URI. */
 function getURLPath($url=null) {
 	if (!$url) { $url = $_SERVER['REQUEST_URI']; }
 	return parse_url($url, PHP_URL_PATH);
 }
 
 /**
-* Returns the key and value joined by an equals sign, perfect for constructing URL parameters.
+* Maps a function over the key-value pairs of an array
+* @param callable $function a function that takes two parameters, the key and the value
+* @param array $array the array to map
 */
+function array_key_map($function, $array) {
+	return array_map($function, array_keys($array), $array);
+}
+
+/** Returns the key and value joined by an equals sign, perfect for constructing URL parameters. */
 function keyParam($key, $val) { return $key . '=' . $val; }
 
 /** Returns the key and value joined by an equal sign, and the value wrapped in double quotes, just right for the attributes of an HTML entity. */
@@ -110,6 +112,24 @@ function w_bailout($keys=[], $others=[], $target=null) {
 	exit;
 }
 
+/**
+* Creates a link from the provided 'path', 'query', and 'fragment' keys in the provided array.
+* @param array $components an array of URL components. It only looks for 'scheme', 'host', 'path', 'query', keys', and 'fragment'. The 'query' component is itself an array whose keys and values will be assembled to construct a valid query. The 'key' component is an array of keys whose values will be looked up in $_REQUEST. If 'path' is not provided, it will default to the current URL path. 'host' and 'scheme' can be left off, and the resulting URL will be relative.
+* The approach here is similar to the wBailout function.
+*/
+define('PATH', 'path');
+define('QUERY', 'query');
+define('KEYS', 'keys');
+define('SCHEME', 'scheme');
+define('HOST', 'host');
+define('FRAGMENT', 'fragment');
+function w_compose_url($components) {
+	$path = $components[PATH] or $path = getURLPath();
+	$query = array_merge((array)$components[QUERY], filter_request((array)$components[KEYS]));
+	$query_str = prefixIfCe(implode('&', array_key_map('keyParam', array_filter($query, 'is_not_null'))), '?');
+	return suffixIfCe($components[SCHEME], '://') . $components[HOST] . $path . $query_str . prefixIfCe($components[FRAGMENT], '#');
+}
+
 //
 // !String functions
 //
@@ -124,16 +144,12 @@ function rand_str($len, $chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
 	return $ret;
 }
 
-/**
-* Truncates a too-long string, replacing the chopped-off tail with ellipses (using &hellip;).
-*/
+/** Truncates a too-long string, replacing the chopped-off tail with ellipses (using &hellip;). */
 function truncateString($string, $maxLen=24) {
 	return ( strlen($string)>$maxLen ? substr($string, 0, $maxLen) . '&hellip;' : $string );
 }
 
-/**
-* Wraps $item in $prefix and $suffix if $test is boolean true, or if $test is an array and $item is in it.
-*/
+/** Wraps $item in $prefix and $suffix if $test is boolean true, or if $test is an array and $item is in it. */
 function wrap($test, $item, $prefix, $suffix) {
 	if ((is_bool($test) && $test) || (is_array($test) && in_array($item, $test))) { return $prefix.$item.$suffix; }
 	else { return $item; }
@@ -194,13 +210,13 @@ function getTimeDisplay($timestamp=null, $sep='&nbsp;') {
 }
 
 /**
-* Returns the date formatted as: "Monday 3 June 1997".
-* The format string is "l j F Y".
+* Returns the date formatted as: "Mon 3 Jun 1997".
+* The format string is "D j M Y".
 * @param int $timestamp integer timestamp such as that returned by strtotime(), if null it is set to time()
 */
 function getDateDisplay($timestamp=null) {
 	if (is_null($timestamp)) { $timestamp = time(); }
-	return date('l j F Y', $timestamp);
+	return date('D j M Y', $timestamp);
 }
 
 /**
@@ -246,93 +262,6 @@ function getTimeIntervalDisplay($timestamp) {
 */
 function getDateAndIntervalDisplay($datestring) { if (!$datestring) { return ''; } return getTimeDateDisplay($stamp = strtotime($datestring), false) . ' (' . getTimeIntervalDisplay($stamp) . ')'; }
 
-
-//
-// !Array functions
-//
-
-/**
-* Maps a function over the key-value pairs of an array
-* @param callable $function a function that takes two parameters, the key and the value
-* @param array $array the array to map
-*/
-function array_key_map($function, $array) {
-	return array_map($function, array_keys($array), $array);
-}
-
-// -----------------------------
-// !Functions for common web page elements
-
-/**
-*
-*/
-function areYouSure($item) {
-	return 'onclick="javascript:return confirm(\'' . addslashes($item) . '?\')"';
-}
-
-/**
-*
-*/
-function actionLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', ), 'title' is optional and defaults to 'display' //NOTE: creates a sequence of <a> elements which should be wrapped in a parent with class="ibwrap", also makes use of class .hide
-	//TODO: implement this with Composer and change 'display' into 'content'
-	if (!count($links)) { return ''; }
-	foreach ($links as $item) {
-		if (!$item) { continue; }
-		if ($item['link']) {
-			if (!$item['title']) { $item['title'] = $item['display']; }
-			$string .= wrap(!is_null($item['pre-link']), '<a href="' . $item['link'] . '" title="' . $item['title'] . '"' . ( $item['xargs'] ? ' ' . $item['xargs'] : '' ) . ( $item['hide'] ? ' class="hide"' : '' ) . '>[' . $item['display'] . ']</a>', $item['pre-link'], $item['post-link']);
-		} else if ($item['display']) {
-			$string .= "<span>{$item['display']}</span>";
-		} else if ($item['raw']) {
-			$string .= $item['raw'];
-		}
-	}
-	return $string;
-}
-
-/**
-*
-*/
-function displayProps($props) { // displays a list of properties, they will display as a simple <ul> list, but no bullets // assumes .dlist class is defined
-	foreach ($props as $name=>$val) { $string .= '<li><span class="fname">' . $name . ':&ensp;</span>' . $val . '</li>'; }
-	return '<ul class="dlist">' . $string . '</ul>';
-}
-
-/**
-*
-*/
-function inlineProps($props) { // displays a list of props as inline <p>'s // assumes classes .iprop and .fname are defined
-	if (!$props) { return ''; } // short-circuit, allows us to pass an empty array
-	foreach ($props as $name=>$val) { $string .= '<p><span class="fname">' . $name . ':</span>&ensp;' . $val . '</p>'; }
-	return '<div class="iprop">' . $string . '</div>';
-}
-
-/**
-*
-*/
-function titleWithLinks($title, $links, $force_wrap=false) { // displays a title with action links to the right, all of them as inline-blocks, so title should be wrapped in <h1> or <p> elements // relies on class .ibwrap
-	if (!$force_wrap && !$links) { return $title; } // bail out if no links
-	return '<div class="ibwrap">' . $title . actionLinks($links) . '</div>';
-}
-
-/**
-*
-*/
-function listOfLinks($links) { // array of items such as: array('link'=>'', 'display'=>'', 'title'=>'', 'xargs'=>'', 'src'=>, ) where 'display' will display first in bold, then an optional image, then an optional 'description'; 'title' (for the <a title=""> and <img alt="">) is optional and will default to 'display'; 'src', if included, will display the image //NOTE: creates a UL list of links with optional images, which are styled with classes .linklist and .llimg
-	foreach ($links as $item) {
-		if (!$item) { continue; }
-		if (!$item['title']) { $item['title'] = $item['display']; }
-		$string .= '<li>';
-		if ($item['link']) { $string .= '<a href="' . $item['link'] . '" title="' . $item['title'] . '"' . ( $item['xargs'] ? ' ' . $item['xargs'] : '' ) . '>'; }
-		$string .= '<p class="rname">' . $item['display'] . '</p>';
-		if ($item['src']) { $string .= '<p><img src="' . $item['src'] . '" class="llimg" alt="' . $item['title'] . '" /></p>'; }
-		if ($item['description']) { $string .= '<p>' . $item['description'] . '</p>'; }
-		if ($item['link']) { $string .= '</a>'; }
-		$string .= '</li>';
-	}
-	return ( $string ? '<ul class="linklist">' . $string . '</ul>' : '' );
-}
-
 //
 // !Custom HTML element processing
 //
@@ -358,14 +287,7 @@ function scanElement($string, $open_tag, $close_tag, $replacer) {
 	return $string;
 }
 
-/**
-* Constant that defines the opening tag for a DCODE block.
-*/
 const DCODE_OPEN_TAG = '<!--encode>';
-
-/**
-* Constant that defines the closing tag for a DCODE block.
-*/
 const DCODE_CLOSE_TAG = '</encode-->';
 
 /**

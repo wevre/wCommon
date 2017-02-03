@@ -15,35 +15,34 @@
 
 require_once 'HTML/Template/Sigma.php';
 
-/**
-* A subclass of HTML_Template_Sigma that adds some very convenient methods.
-*/
+define('g_PAGE_TITLE', 'g_PAGE_TITLE');
+
+function setPageTitle($title) { $GLOBALS[g_PAGE_TITLE] = $title; }
+
+/** A subclass of HTML_Template_Sigma that adds some very convenient methods. */
 class Template extends HTML_Template_Sigma {
 
-	const SKEY_ERROR = 'tmpl-error';
-	const SKEY_CONFIRM = 'tmpl-confirm';
-
-/**
-* Constructor for Template.
-* It loads the template file $tfile.
-* Subclasses should override and provide defaults for $tdir and $cdir.
-* @param string $tfile template file
-* @param string $tdir template directory
-* @param string $cdir cache directory
-*/
+	/**
+	* Constructor for Template.
+	* It loads the template file $tfile.
+	* Subclasses should override and provide defaults for $tdir and $cdir.
+	* @param string $tfile template file
+	* @param string $tdir template directory
+	* @param string $cdir cache directory
+	*/
 	function __construct($tfile, $tdir, $cdir=null) {
 		parent::__construct($tdir, $cdir);
 		$this->loadTemplateFile($tfile);
 	}
 
-/**
-* Sets variables and parses a block.
-* By default this parses the block, meaning placeholder variables are replaced and the block is written out.
-* You can prevent that with the $doParse parameter, for situations where you need to replace variables but delay parsing.
-* @param string $block the block in the template to parse; if `null`, the __global__ block will be used
-* @param array $varArray array of block variables mapped to replacement strings
-* @param bool $doParse indicates whether or not to parse the block
-*/
+	/**
+	* Sets variables and parses a block.
+	* By default this parses the block, meaning placeholder variables are replaced and the block is written out.
+	* You can prevent that with the $doParse parameter, for situations where you need to replace variables but delay parsing.
+	* @param string $block the block in the template to parse; if `null`, the __global__ block will be used
+	* @param array $varArray array of block variables mapped to replacement strings
+	* @param bool $doParse indicates whether or not to parse the block
+	*/
 	function parseBlock($block, $varArray=null, $doParse=true) { // sets variables and parses the block
 		if (!$block) { $block = '__global__'; }
 		$this->setCurrentBlock($block);
@@ -51,118 +50,125 @@ class Template extends HTML_Template_Sigma {
 		if ($doParse) { $this->parseCurrentBlock(); }
 	}
 
-/**
-* Sets block variables but skips parsing.
-* @param string $block the block in the template to parse; if `null`, the __global__ block will be used
-* @param array $varArray array of block variables mapped to replacement strings
-*/
+	/**
+	* Sets block variables but skips parsing.
+	* @param string $block the block in the template to parse; if `null`, the __global__ block will be used
+	* @param array $varArray array of block variables mapped to replacement strings
+	*/
 	function setBlockVariables($block, $varArray=null) {
-		if (!$block) { $block = '__global__'; }
-		$this->setCurrentBlock($block);
-		if (!is_null($varArray)) { $this->setVariable($varArray); }
+		$this->parseBlock($block, $varArray, false);
 	}
 
 }
 
-/**
-* A subclass of Template that includes more convenience methods for common page elements.
-* See the included file `template.tmpl` for a sample template that works with these methods.
-*/
+/** A subclass of Template that includes more convenience methods for common page elements. See the file `template.tmpl` for a sample template that works with these methods. */
 class wTemplate extends Template {
 
-/**
-*
-*/
+	const SKEY_ERROR = 'tmpl-error';
+	const SKEY_CONFIRM = 'tmpl-confirm';
+
+	public $cp; // A composer object for use by the template.
+
+	/** Initializes the template and checks for any error or confirmation messages to be displayed. */
 	function __construct($tfile, $tdir, $cdir=null) {
 		parent::__construct($tfile, $tdir, $cdir);
+		$this->cp = new Composer();
+		$page_title = $GLOBALS[g_PAGE_TITLE];
+		$this->setBlockVariables(null, [ 'HEAD-TITLE'=>$page_title, ]);
 		if ($_SESSION[self::SKEY_ERROR]) { foreach ($_SESSION[self::SKEY_ERROR] as $msg) { $this->displayMessage($msg, 'error'); } unset($_SESSION[self::SKEY_ERROR]); }
 		if ($_SESSION[self::SKEY_CONFIRM]) { foreach ($_SESSION[self::SKEY_CONFIRM] as $msg) { $this->displayMessage($msg); } unset($_SESSION[self::SKEY_CONFIRM]); }
 	}
 
-	// -----------------------------
-	// !methods for standard template parts: style sheets, scripts, and so forth // all these should be defined in the tmpl-standard.tpl file
-
-/*
-*
-*/
-	function addStyleSheet($sheet) { $this->parseBlock('BLK-STYLE', array('STYLESHEET'=>$sheet, )); }
-
-/*
-*
-*/
-	function addIEStyleSheet($sheet) { $this->parseBlock('BLK-STYLE-IE', array('STYLESHEET'=>$sheet, )); }
-
-/*
-*
-*/
-	function addInlineStyle($text) { $this->parseBlock('BLK-INLINE-STYLE', array('STYLE'=>$text, )); }
-
-/*
-*
-*/
-	function addScriptFile($file) { $this->parseBlock('BLK-SCRIPT', array('SCRIPTFILE'=>$file, )); }
-
-/*
-*
-*/
-	function addInlineScript($text) { $this->parseBlock('BLK-INLINE-SCRIPT', array('SCRIPT'=>$text, )); }
-
-/**
-* Adds a snippet of javascript to the BODY element's onload="" attribute. Note that the onload attribute is surrounded by double quotes, so the javascript should only include single quotes.
-*/
-	function addOnload($string) { $this->parseBlock('BLK-ONLOADS', array('ONLOAD'=>$string, )); }
-
-	// -----------------------------
-	// !handling messages and items in the main section of the page
-	//NOTE: assumes the presence of the script-fader.js script
-	//TODO: this needs to NOT be the default. If installations want to use jQuery they can override and offer the functionality, but the default should not use it.
-
-/*
-*
-*/
-	function displayMessage($msg, $class='') {
-		$this->parseBlock('BLK-MSG', array('MSG'=>$msg, 'MSG-XCLASS'=>$class, ));
-		$this->addjQuery();
-		if (!$this->addedFader) {
-			$this->addScriptFile('/scripts/script-fader.js');
-			$this->addedFader = true;
-		}
+	function show() {
+		if ($this->onloads) { $this->parseBlock('BLK-ONLOADS', [ 'ONLOAD'=>implode(' ', $this->onloads), ]); }
+		parent::show();
 	}
 
-/*
-*
-*/
-	function addjQuery() {
-		if (!$this->addedjQuery) {
-			$this->addScriptFile('//code.jquery.com/jquery-1.10.2.min.js');
-			$this->addedjQuery = true;
-		}
+	//
+	// !Standard template parts
+	//
+
+	/** Adds a style sheet link. */
+	function addStyleSheet($sheet) {
+		$this->cp->addElement('link', [ 'rel'=>'stylesheet', 'href'=>$sheet, ]);
+		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
 	}
 
-	// -----------------------------
-	// !functions for setting the error or confirm message that will display at the top of the page
+	/** Adds a string for an inline style sheet. */
+	function addInlineStyle($text) {
+		$this->cp->addElement('style', [], $text);
+		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+	}
 
-/*
-*
-*/
+	/** Adds a script file link. */
+	function addScriptFile($file) {
+		$this->cp->addElement('script', [ 'src'=>$file, ]);
+		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+	}
+
+	/** Adds a string as an inline script. */
+	function addInlineScript($text) {
+		$this->cp->addElement('script', [], $text);
+		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+	}
+
+	/** Adds a snippet of javascript to the BODY element's onload="" attribute. Note that the onload attribute is surrounded by double quotes, so the javascript should only include single quotes. */
+	function addOnload($string) {
+		$this->onloads[] = $string;
+	}
+
+	/** Adds an item to the BLK-MAIN-ITEM portion. See the sample template. */
+	function addItem($item) {
+		$this->parseBlock('BLK-MAIN-ITEMS', array('MAIN-ITEM'=>$item, ));
+	}
+
+	//
+	// !Error and confirm messages
+	//
+
+		/**
+		* Displays a message. On the first message only, adds an inline script to fade out the message after a delay.
+		* @param string $msg The message to display
+		* @param string $class An additional class to place on the message (i.e., 'error').
+		* @param string $close Text to represent "close this message". Defaults to "X".
+		* See the sample template for the DIV's and classes that make messages work.
+		*/
+	function displayMessage($msg, $class='', $close='X') {
+		$this->parseBlock('BLK-MSG', array('MSG'=>$msg, 'MSG-XCLASS'=>$class, 'MSG-X'=>$close));
+		if ($this->addedFader) { return; }
+		$this->addInlineScript(<<<EOT
+function msgClose(item) {
+	while (item && item.parentNode) {
+		if (item.nodeName == 'DIV' && item.className == 'mborder') {
+			var next = item.nextSibling;
+			if (next) {
+				next.style.marginTop = (next.offsetTop - item.offsetTop) + 'px';
+				setTimeout(function() { next.style.transition = 'margin-top 1s'; next.style.marginTop = 0; }, 20);
+			}
+			item.style.display = 'none';
+			break;
+		}
+		item = item.parentNode;
+	}
+}
+EOT
+		);
+		$this->addedFader = true;
+	}
+
+	/** Clears error messages from the session-stored list. */
 	static function resetErrorMessages() { unset($_SESSION[self::SKEY_ERROR]); }
 
-/*
-*
-*/
+	/** Clears confirmation messages from the session-stored list. */
 	static function resetConfirmMessage() { unset($_SESSION[self::SKEY_CONFIRM]); }
 
-/*
-*
-*/
+	/** Adds an error message to the session-stored list. They will be displayed on the next page load. The $onlyIfEmpty parameter, if true, will prevent a message from being added if one already exists. */
 	static function addErrorMessage($msg, $onlyIfEmpty=false) {
 		if ($onlyIfEmpty && count($_SESSION[self::SKEY_ERROR])>0) { return; }
 		$_SESSION[self::SKEY_ERROR][] = $msg;
 	}
 
-/*
-*
-*/
+	/** Adds a confirmation message to the session-stored list. They will be displayed on the next page load. The $onlyIfEmpty parameter, if true, will prevent a message from being added if one already exists. */
 	static function addConfirmMessage($msg, $onlyIfEmpty=false) {
 		if ($onlyIfEmpty && count($_SESSION[self::SKEY_CONFIRM])>0) { return; }
 		$_SESSION[self::SKEY_CONFIRM][] = $msg;
