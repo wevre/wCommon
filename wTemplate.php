@@ -73,7 +73,7 @@ class wTemplate extends Template {
 	function __construct($tfile, $tdir, $cdir=null) {
 		parent::__construct($tfile, $tdir, $cdir);
 		$this->cp = new Composer();
-		$page_title = $GLOBALS[g_PAGE_TITLE];
+		$page_title = $this->getPageTitle();
 		$this->setBlockVariables(null, [ 'HEAD-TITLE'=>$page_title, ]);
 		if ($_SESSION[self::SKEY_ERROR]) { foreach ($_SESSION[self::SKEY_ERROR] as $msg) { $this->displayMessage($msg, 'error'); } unset($_SESSION[self::SKEY_ERROR]); }
 		if ($_SESSION[self::SKEY_CONFIRM]) { foreach ($_SESSION[self::SKEY_CONFIRM] as $msg) { $this->displayMessage($msg); } unset($_SESSION[self::SKEY_CONFIRM]); }
@@ -82,6 +82,10 @@ class wTemplate extends Template {
 	function show() {
 		if ($this->onloads) { $this->parseBlock('BLK-ONLOADS', [ 'ONLOAD'=>implode(' ', $this->onloads), ]); }
 		parent::show();
+	}
+
+	function getPageTitle() {
+		return $GLOBALS[g_PAGE_TITLE];
 	}
 
 	//
