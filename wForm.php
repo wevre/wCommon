@@ -74,10 +74,11 @@ class wFormBuilder {
 	* @param string $action the URL where the from will be sent
 	* @param string $method either 'post' or 'get', defaults to 'post'
 	*/
-	function __construct($attribs=[]) {
+	function __construct($attribs=[], $cp=null) {
 		if (!$attribs['action']) { $attribs['action'] = getURLPath(); }
 		if (!$attribs['method']) { $attribs['method'] = 'post'; }
-		$this->cp = new wHTMLComposer();
+		if ($cp) { $this->cp = $cp; }
+		else { $this->cp = new wHTMLComposer(); }
 		$this->cp->beginElement('form', $attribs);
 	}
 
@@ -321,7 +322,7 @@ class wFormBuilder {
 		// Make sure 'type', 'value', 'name', and 'id' are present.
 		if (!$items['type']) { $items['type'] = 'text'; }
 		if (!$items['value']) { $items['value'] = null; }
-		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
+		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); } // Using ENT_QUOTES means both double and single quotes are converted. But we should be safe with single quotes and so don't need a flag here (i.e., the default should be fine). Same note applies to `addTextArea` below.
 		if (!$items['id']) { $items['id'] = $items['name']; }
 		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
 		$this->cp->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'value', 'name', 'id'])), (array)$items['xattr']));
@@ -359,7 +360,7 @@ class wFormBuilder {
 		if ($items['help']) { $this->cp->addElement('div', array('class'=>static::CLASS_HELP, 'id'=>$items['help-id'], ), $items['help']); }
 		if (!$items['rows']) { $items['rows'] = 5; }
 		if (!$items['id']) { $items['id'] = $items['name']; }
-		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); }
+		if (self::sessionValue($items['name'])) { $items['value'] = htmlspecialchars(self::sessionValue($items['name']), ENT_QUOTES); } // See note above for `addTextField`.
 		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
 		$this->cp->addElement('textarea', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'id', 'rows'])), (array)$items['xattr']), $items['value']);
 		$this->cp->endElement();

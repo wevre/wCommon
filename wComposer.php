@@ -17,6 +17,8 @@ require_once 'wCommon/wStandard.php';
 
 define('KEY_CONTENT', 'content');
 define('KEY_ATTRIBS', 'attribs');
+define('KEY_HREF', 'href');
+define('KEY_WRAP_CLASS', 'wrap-class');
 
 /** Helper class for composing HTML (or portions thereof). */
 class wHTMLComposer {
@@ -155,17 +157,19 @@ class wHTMLComposer {
 	* Composes an array of links, each wrapped in a <P> element.
 	* If an 'href' attribute is not present, the item will be composed with a <SPAN> tag, otherwise it will be a normal <A> tag. Either way, they will have the CLS_ALINK class.
 	* @param array $links is an array of arrays. Each sub-array contains a KEY_ATTRIBS entry and a KEY_CONTENTS entry.
-	* The KEY_ATTRIBS contain the attributes for an A or SPAN element, typically 'href' and 'title'.
-	* The KEY_CONTENTS contains the text to display as the content of the A or SPAN tab.
+	* KEY_ATTRIBS contain the attributes for an A or SPAN element, typically 'href' and 'title'.
+	* KEY_CONTENT contains the text to display as the content of the A or SPAN tab.
+	* KEY_HREF (optional) contains the pieces to send to compose_url and will become the 'href' attribute.
 	*/
 	function composeActionLinks($links) {
 		if (!count($links)) { return; }
 		foreach ($links as $item) {
 			if (!$item) { continue; }
-			$this->beginElement('p');
+			$this->beginElement('p', $item[KEY_WRAP_CLASS]);
 			$attribs = $item[KEY_ATTRIBS];
 			if (!$attribs['class']) { $attribs['class'] = static::CLS_ALINK; }
-			$this->addElement(( $item[KEY_ATTRIBS]['href'] ? 'a' : 'span' ), $attribs, $item[KEY_CONTENT]);
+			if ($item[KEY_HREF]) { $attribs['href'] = w_compose_url($item[KEY_HREF]); }
+			$this->addElement(( $attribs['href'] ? 'a' : 'span' ), $attribs, $item[KEY_CONTENT]);
 			$this->endElement(); // <P>
 		}
 	}

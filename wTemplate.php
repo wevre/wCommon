@@ -67,12 +67,15 @@ class wTemplate extends Template {
 	const SKEY_ERROR = 'tmpl-error';
 	const SKEY_CONFIRM = 'tmpl-confirm';
 
+	const CLASS_CP = 'wHTMLComposer';
+
 	public $cp; // A composer object for use by the template.
 
 	/** Initializes the template and checks for any error or confirmation messages to be displayed. */
 	function __construct($tfile, $tdir, $cdir=null) {
 		parent::__construct($tfile, $tdir, $cdir);
-		$this->cp = new Composer();
+		$cpClass = static::CLASS_CP;
+		$this->cp = new $cpClass();
 		$page_title = $this->getPageTitle();
 		$this->setBlockVariables(null, [ 'HEAD-TITLE'=>$page_title, ]);
 		if ($_SESSION[self::SKEY_ERROR]) { foreach ($_SESSION[self::SKEY_ERROR] as $msg) { $this->displayMessage($msg, 'error'); } unset($_SESSION[self::SKEY_ERROR]); }

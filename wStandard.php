@@ -101,21 +101,23 @@ function w_confirmServer($hostname, $https=false, $domain='www') {
 * @param array $keys list of parameters currently present in $_REQUEST that will be copied to the redirect URL
 * @param array $others associative array of parameters not present in $_REQUEST to be added to the redirect URL
 * @param object $target an object that responds to getFragment() to add a fragment to the redirect URL
+* @param string $path desired location, if different from the current script (which is the default)
 * @uses getURLPath()
 * @uses prefixIfCe()
 * @uses keyParam()
 */
-function w_bailout($keys=[], $others=[], $target=null) {
+function w_bailout($keys=[], $others=[], $target=null, $path=null) {
 	if ($target && is_object($target) && method_exists($target, 'getFragment')) { $fragment = $target->getFragment(); }
 	$query = array_merge(filter_request($keys), $others);
-	header('Location: ' . getURLPath() . prefixIfCe(implode('&', array_key_map('keyParam', array_filter($query, 'is_not_null'))), '?') . prefixIfCe($fragment, '#'));
+	if (!$path) { $path = getURLPath(); }
+	header('Location: ' . $path . prefixIfCe(implode('&', array_key_map('keyParam', array_filter($query, 'is_not_null'))), '?') . prefixIfCe($fragment, '#'));
 	exit;
 }
 
 /**
 * Creates a link from the provided 'path', 'query', and 'fragment' keys in the provided array.
 * @param array $components an array of URL components. It only looks for 'scheme', 'host', 'path', 'query', keys', and 'fragment'. The 'query' component is itself an array whose keys and values will be assembled to construct a valid query. The 'key' component is an array of keys whose values will be looked up in $_REQUEST. If 'path' is not provided, it will default to the current URL path. 'host' and 'scheme' can be left off, and the resulting URL will be relative.
-* The approach here is similar to the wBailout function.
+* The approach here is similar to the w_bailout function.
 */
 define('PATH', 'path');
 define('QUERY', 'query');
@@ -151,7 +153,7 @@ function truncateString($string, $maxLen=24) {
 
 /** Wraps $item in $prefix and $suffix if $test is boolean true, or if $test is an array and $item is in it. */
 function wrap($test, $item, $prefix, $suffix) {
-	if ((is_bool($test) && $test) || (is_array($test) && in_array($item, $test))) { return $prefix.$item.$suffix; }
+	if ((is_array($test) && in_array($item, $test)) || (!is_array($test) && $test)) { return $prefix.$item.$suffix; }
 	else { return $item; }
 }
 
@@ -298,15 +300,12 @@ const DCODE_CLOSE_TAG = '</encode-->';
 * @uses scanElement()
 */
 function dcode($string, $addNoScript=true) {
-	$replacer = function($shifted) {
-		$uppShift = mt_rand(3, 23);
-		$lowShift = mt_rand(3,23);
-		$numShift = mt_rand(2,8);
-		$shifted = preg_replace_callback('/[A-Z]/', function ($m) use ($uppShift) { return chr( (90>=($c=ord($m[0])+$uppShift)) ? $c : $c-26 ); }, $shifted);
-		$shifted = preg_replace_callback('/[a-z]/', function ($m) use ($lowShift) { return chr( (122>=($c=ord($m[0])+$lowShift)) ? $c : $c-26 ); }, $shifted);
-		$shifted = preg_replace_callback('/\d/', function ($m) use ($numShift) { return chr( (57>=($c=ord($m[0])+$numShift)) ? $c : $c-10 ); }, $shifted);
-		$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . '<!--' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[A-Z]/g,function(c){return String.fromCharCode(90>=(c=c.charCodeAt(0)+' . (26-$uppShift) . ')?c:c-26);}).replace(/[a-z]/g,function(c){return String.fromCharCode(122>=(c=c.charCodeAt(0)+' . (26-$lowShift) . ')?c:c-26);}).replace(/\d/g,function(c){return String.fromCharCode(57>=(c=c.charCodeAt(0)+' . (10-$numShift) . ')?c:c-10);}));' . PHP_EOL . '//-->' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
-		if ($addNoScript) { $coded .= '<noscript><span class="bmatch">please enable javascript</span></noscript>'; }
+	$replacer = function($shifted) use ($addNoScript) {
+		// Shift all 95 printable ASCII characters from 32 (space) to 126 (tilde) by some random amount, wrapping back around to the start if we fall off the upper end.
+		$shift = mt_rand(5, 90);
+		$shifted = preg_replace_callback('/[\x20-\x7E]/', function ($m) use ($shift) { return chr( 126>=($c=ord($m[0])+$shift) ? $c : $c-95); }, $shifted);
+		$coded = '<script type="text/javascript">' . PHP_EOL . '//<![CDATA[' . PHP_EOL . 'document.write("'. addslashes($shifted) . '".replace(/[\x20-\x7E]/g,function(c){return String.fromCharCode(126>=(c=c.charCodeAt(0)+' . (95-$shift) . ')?c:c-95);}));' . PHP_EOL . '//]]>' . PHP_EOL . '</script>';
+		if ($addNoScript) { $coded .= '<noscript><span class="bmatch">[enable javascript to view this content]</span></noscript>'; }
 		return $coded;
 	};
 	return scanElement($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, $replacer);
