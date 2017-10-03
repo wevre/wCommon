@@ -142,7 +142,7 @@ class wFormBuilder {
 	* @param string $value a value to be cleaned
 	* @param array $flags an array of constants that control the scrubbing
 	*/
-	protected static function cleanValue($value, $flags=array()) {
+	static function cleanValue($value, $flags=array()) {
 		$value = trim($value) or $value = null; // we don't want empty string, change it to null
 		if (in_array(self::NO_SPEC_CHARS, $flags) && $value!=urlencode($value)) { return array(null, 'No special characters or spaces'); }
 		if (in_array(self::MUST_EXIST, $flags) && !$value) { return array(null, "Can't be blank"); }
@@ -384,7 +384,7 @@ class wFormBuilder {
 		foreach ($butts as $items) {
 			if (!$items['type']) { $items['type'] = 'submit'; }
 			if (!$items['name']) { $items['name'] = self::KEY_ACTION; }
-			if (!$items['id']) { $items['id'] = $items['name'] . '-' . $items['value']; }
+			if (!$items['id'] && $items['name']) { $items['id'] = $items['name'] . '-' . $items['value']; }
 			$this->cp->addElement('button', array_merge(array_intersect_key($items, array_flip(['type', 'id', 'name', 'value'])), (array)$items['xattr']), $items['content']);
 		}
 		$this->cp->endElement();
@@ -432,7 +432,7 @@ class wFormBuilder {
 			else if (!is_null($items['selected'])) { $radio['selected'] = ($items['selected'] == $radio['value']); }
 			$radio['type'] = 'radio';
 			$radio['name'] = $name;
-			$radio['id'] = $name . '-' . $radio['value'];
+			if ($name) { $radio['id'] = $name . '-' . $radio['value']; }
 			$radio['checked'] = ( $radio['selected'] ? 'checked' : null );
 			if ($doneOne) { $this->cp->addCustom( $radio['break'] ? $radio['break'] : $break ); }
 			$this->cp->addElement('input', array_merge(array_intersect_key($radio, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$radio['xattr']));
@@ -531,7 +531,7 @@ class wFormBuilder {
 			else if ($items['selected']) { $box['selected'] = ($items['selected'] == $box['value']); }
 			$box['type'] = 'checkbox';
 			$box['name'] = $name . '[]';
-			$box['id'] = $name . '-' . $box['value'];
+			if ($name) { $box['id'] = $name . '-' . $box['value']; }
 			$box['checked'] = ( $box['selected'] ? 'checked' : null );
 			if ($doneOne) { $this->cp->addCustom( $box['break'] ? $box['break'] : $break ); }
 			$this->cp->addElement('input', array_merge(array_intersect_key($box, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$box['xattr']));
@@ -580,7 +580,7 @@ class wFormBuilder {
 		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
 		$items['type'] = 'checkbox';
 		$items['name'] = $name;
-		$items['id'] = $name . '-' . $items['value'];
+		if ($name) { $items['id'] = $name . '-' . $items['value']; }
 		$items['checked'] = ( $items['selected'] ? 'checked' : null );
 		$this->cp->addElement('input', array_merge(array_intersect_key($items, array_flip(['type', 'name', 'value', 'id', 'checked'])), (array)$items['xattr']));
 		if ($items['label']) {
