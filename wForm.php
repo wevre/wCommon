@@ -48,6 +48,7 @@ class wFormBuilder {
 	const CLASS_INPUT = 'inp';
 	const CLASS_HELP = 'help';
 	const CLASS_EG = 'eg';
+	const CLASS_BUTTON_WRAPPER = 'bwrap';
 
 	// Constants for controlling how form data will be scrubbed.
 	const ENCODE_HTML = 'encode-html'; // Converts `&`, `"`, `<` and `>` using htmlspecialchars(). Note it does not convert single quotes `'`
@@ -380,7 +381,7 @@ class wFormBuilder {
 	* </dl>
 	*/
 	function addButtons($butts) {
-		$this->cp->beginElement('p');
+		$this->cp->beginElement('p', static::CLASS_BUTTON_WRAPPER);
 		foreach ($butts as $items) {
 			if (!$items['type']) { $items['type'] = 'submit'; }
 			if (!$items['name']) { $items['name'] = self::KEY_ACTION; }
