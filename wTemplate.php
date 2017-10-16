@@ -1,4 +1,5 @@
 <?php
+namespace wCommon;
 /**
 * Subclasses that expand the functionality of HTML_Template_Sigma.
 *
@@ -20,7 +21,7 @@ define('g_PAGE_TITLE', 'g_PAGE_TITLE');
 function setPageTitle($title) { $GLOBALS[g_PAGE_TITLE] = $title; }
 
 /** A subclass of HTML_Template_Sigma that adds some very convenient methods. */
-class Template extends HTML_Template_Sigma {
+class Template extends \HTML_Template_Sigma {
 
 	/**
 	* Constructor for Template.

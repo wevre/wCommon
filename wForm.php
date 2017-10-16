@@ -1,4 +1,5 @@
 <?php
+namespace wCommon;
 /**
 * Helper class for displaying and parsing web forms.
 *

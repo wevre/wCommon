@@ -1,4 +1,5 @@
 <?php
+namespace wCommon;
 /**
 * Helper class for constructing HTML elements.
 *
@@ -73,7 +74,7 @@ class wHTMLComposer {
 	/** Closes a previously opened HTML element with a closing tag. Calls to this function must be balanced with prior calls to $this->beginElement(). */
 	function endElement() {
 		$elem = array_pop($this->tagStack);
-		if (!$elem) { throw new Exception('Too many calls to endElement'); }
+		if (!$elem) { throw new \Exception('Too many calls to endElement'); }
 		if ($this->fIndent) { $indent = PHP_EOL . str_repeat("\t", count($this->tagStack)); }
 		$this->middle .= $indent . "</{$elem}>";
 	}
@@ -102,7 +103,7 @@ class wHTMLComposer {
 		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		else if (!is_array($attribs)) { $attribs = []; }
 		if ($class = $attribs['class']) { self::registerClass($class); }
-		$attribString = implode(' ', array_key_map('attribParam', array_filter($attribs, 'is_not_null')));
+		$attribString = implode(' ', array_key_map(__NAMESPACE__ . '\attribParam', array_filter($attribs, __NAMESPACE__ . '\is_not_null')));
 		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
 		else { return '<' . $elem . prefixIfCe($attribString, ' ') . '>' . $content . ( $close ? "</$elem>" : '' ); }
 	}

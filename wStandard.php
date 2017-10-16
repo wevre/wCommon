@@ -1,4 +1,5 @@
 <?php
+namespace wCommon;
 /**
 * Handy functions shared between websites.
 *
@@ -110,7 +111,7 @@ function w_bailout($keys=[], $others=[], $target=null, $path=null) {
 	if ($target && is_object($target) && method_exists($target, 'getFragment')) { $fragment = $target->getFragment(); }
 	$query = array_merge(filter_request($keys), $others);
 	if (!$path) { $path = getURLPath(); }
-	header('Location: ' . $path . prefixIfCe(implode('&', array_key_map('keyParam', array_filter($query, 'is_not_null'))), '?') . prefixIfCe($fragment, '#'));
+	header('Location: ' . $path . prefixIfCe(implode('&', array_key_map(__NAMESPACE__ . '\keyParam', array_filter($query, __NAMESPACE__ . '\is_not_null'))), '?') . prefixIfCe($fragment, '#'));
 	exit;
 }
 
@@ -128,8 +129,8 @@ define('FRAGMENT', 'fragment');
 function w_compose_url($components) {
 	$path = $components[PATH] or $path = getURLPath();
 	$query = array_merge((array)$components[QUERY], filter_request((array)$components[KEYS]));
-	$query_str = prefixIfCe(implode('&', array_key_map('keyParam', array_filter($query, 'is_not_null'))), '?');
-	return suffixIfCe($components[SCHEME], '://') . $components[HOST] . $path . $query_str . prefixIfCe($components[FRAGMENT], '#');
+	$query_str = http_build_query($query);
+	return suffixIfCe($components[SCHEME], '://') . $components[HOST] . $path . prefixIfCe($query_str, '?') . prefixIfCe($components[FRAGMENT], '#');
 }
 
 //
@@ -240,8 +241,8 @@ function dbDate($timestamp=null, $fmt='Y-m-d H:i:s') {
 * @todo Should include a second parameter that can override 'now'.
 */
 function getTimeIntervalDisplay($timestamp) {
-	$then = new DateTime(); $then->setTimestamp($timestamp);
-	$now = new DateTime();
+	$then = new \DateTime(); $then->setTimestamp($timestamp);
+	$now = new \DateTime();
 	$interval = $now->diff($then);
 	$seconds = abs($timestamp-$now->getTimestamp());
 	$string = '';
