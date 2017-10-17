@@ -68,7 +68,7 @@ class wTemplate extends Template {
 	const SKEY_ERROR = 'tmpl-error';
 	const SKEY_CONFIRM = 'tmpl-confirm';
 
-	const CLASS_CP = 'wHTMLComposer';
+	const CLASS_CP = '\wCommon\wHTMLComposer';
 
 	public $cp; // A composer object for use by the template.
 
