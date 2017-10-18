@@ -615,7 +615,7 @@ class wFormBuilder {
 	/** Processes the uploaded file. */
 	static function handleFileUpload($name, $types=null) {
 		do {
-			if (!$types) { $types = self::$TYPES_FILES; }
+			if (!$types) { $types = static::$TYPES_FILES; }
 			// Check for errors.
 			if (!$_FILES[$name]) { break; }
 			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
