@@ -130,6 +130,11 @@ class wTemplate extends Template {
 		$this->parseBlock('BLK-MAIN-ITEMS', array('MAIN-ITEM'=>$item, ));
 	}
 
+	/** Adds an item based on whatever has been composed in the internal $cp Composer. */
+	function addComposerItem() {
+		$this->addItem($this->cp->getHTML());
+	}
+
 	//
 	// !Error and confirm messages
 	//
