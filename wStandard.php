@@ -126,7 +126,7 @@ define('KEYS', 'keys');
 define('SCHEME', 'scheme');
 define('HOST', 'host');
 define('FRAGMENT', 'fragment');
-function w_compose_url($components) {
+function w_compose_url($components=[]) {
 	$path = $components[PATH] or $path = getURLPath();
 	$query = array_merge((array)$components[QUERY], filter_request((array)$components[KEYS]));
 	$query_str = http_build_query($query);
