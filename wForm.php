@@ -211,8 +211,8 @@ class wFormBuilder {
 
 	/** While testing the checksum, the form builder normalizes line endings and caches those in $_POST. This function retrieves that normalized version (or creates it lazily if it was never created by a call to `testChecksum`. */
 	static function getNormalized($name) {
-		if (array_key_exists($name . FormBuilder::NORMALIZED_SUFFIX, $_POST)) {
-			return $_POST[$name . FormBuilder::NORMALIZED_SUFFIX];
+		if (array_key_exists($name . wFormBuilder::NORMALIZED_SUFFIX, $_POST)) {
+			return $_POST[$name . wFormBuilder::NORMALIZED_SUFFIX];
 		} else {
 			return normalizedLineEndings(trim($_POST[$name]));
 		}
