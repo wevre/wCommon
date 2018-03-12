@@ -47,7 +47,7 @@ function errorLog($msg, $excp=null, $ident=[]) {
 		$ident[] = $GLOBALS[g_ACCT];
 		$ident[] = getURLPAth();
 	}
-	error_log('[' . impode($idee, '-') . "] $msg");
+	error_log('[' . implode($idee, '-') . "] $msg");
 	if ($excp) { error_log(formatException($excp)); }
 }
 
