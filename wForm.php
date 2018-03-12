@@ -16,11 +16,8 @@ namespace wCommon;
 
 require_once 'wCommon/wStandard.php';
 
-/** Error function used to log diagnostic messages and errors when testing checksums and when uploading files. */
-function form_error_log($msg, $excp=null) { if (wFormBuilder::$fDebug) { w_error_log(null, 'FORM', $msg, $excp); } }
-
 /** Function to display different line endings. Used by debug logic in the checksum methods. */
-function showLineEndings($string) { form_error_log(str_replace(array("\r\n", "\n\r", "\r", ), array("CRLF\n", "LFCR\n", "CR\n", ), $string)); }
+function showLineEndings($string) { errorLog(str_replace(array("\r\n", "\n\r", "\r", ), array("CRLF\n", "LFCR\n", "CR\n", ), $string)); }
 
 /** Converts all line endings to UNIX format and reduces to no more than two in succession. */
 function normalizedLineEndings($s) {
@@ -205,7 +202,7 @@ class wFormBuilder {
 		$normalized = normalizedLineEndings(trim($_POST[$name]));
 		$_POST[$name . self::NORMALIZED_SUFFIX] = $normalized;
 		$val = ($_POST[$name . self::HASH_SUFFIX] == substr(sha1($normalized), self::HASH_LEN));
-		form_error_log('for name ' . $name . ' checksum matches? ' . ( $val ? 'YES' : 'NO' ));
+		errorLog('for name ' . $name . ' checksum matches? ' . ( $val ? 'YES' : 'NO' ));
 		return $val;
 	}
 
@@ -293,7 +290,7 @@ class wFormBuilder {
 	* @uses addHiddenField()
 	*/
 	function addHiddenKeys($keys=[]) {
-		array_key_map([ $this, 'addHiddenField' ], filter_request($keys));
+		arrayKeyMap([ $this, 'addHiddenField' ], filterRequest($keys));
 	}
 
 	/**
@@ -618,7 +615,7 @@ class wFormBuilder {
 			if (!$types) { $types = static::$TYPES_FILES; }
 			// Check for errors.
 			if (!$_FILES[$name]) { break; }
-			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { form_error_log('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
+			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { errorLog('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
 			if ($types && !in_array($_FILES[$name]['type'], $types)) { static::setSessionError($name, 'Invalid file type'); break; }
 			return $_FILES[$name]['tmp_name'];
 		} while (0);

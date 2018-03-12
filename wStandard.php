@@ -15,6 +15,18 @@ namespace wCommon;
 */
 
 //
+// !Keys for global variables.
+//
+
+define('g_CNXN', 'g_CNXN');
+define('g_ACCT', 'g_ACCT');
+define('g_SUBDOMAIN', 'g_SUBDOMAIN');
+define('g_SITECODE', 'g_SITECODE');
+define('g_SITENAME', 'g_SITENAME');
+define('g_HOSTNAME', 'g_HOSTNAME');
+define('g_SITEABBREV', 'g_SITEABBREV');
+
+//
 // !Error functions
 //
 
@@ -26,25 +38,16 @@ function formatException($e) {
 }
 
 /**
-* Prints error information to the standard error log.
-* The type of message, preceded by the ident value, will be printed in square brackets, followed by the msg.
-* If an $excp is passed in, it will be printed after using the formatException() function.
-* Typically, projects that use this library will overload this funciton with their own version, supplying default values for some of the parameters.
-* For example, here the $ident parameter is supplied by a global variable:
-* <code>
-* function my_error_log($type, $msg, $excp=null) {
-*     global $account;
-*     w_error_log( $account, $type, $msg, $excp);
-* }
-* </code>
-* @param string $ident
-* @param string $type
-* @param string $msg
-* @param Exception $excp
+* Prints error information, including details on an exception, if c’è, to the standard error log.
+*@param array $ident is an array of items to be included as identifiers, they will be concatenated with '-'. If no $ident is provided, it will default to the current account (from $GLOBALS[g_ACCT] if c’è) and path.
 * @uses formatException()
 */
-function w_error_log($ident, $type, $msg, $excp=null) {
-	error_log("[" . suffixIfCe($ident, '-') . "$type] $msg");
+function errorLog($msg, $excp=null, $ident=[]) {
+	if (!$ident) {
+		$ident[] = $GLOBALS[g_ACCT];
+		$ident[] = getURLPAth();
+	}
+	error_log('[' . impode($idee, '-') . "] $msg");
 	if ($excp) { error_log(formatException($excp)); }
 }
 
@@ -58,41 +61,18 @@ function getURLPath($url=null) {
 	return parse_url($url, PHP_URL_PATH);
 }
 
-/**
-* Maps a function over the key-value pairs of an array
-* @param callable $function a function that takes two parameters, the key and the value
-* @param array $array the array to map
-*/
-function array_key_map($function, $array) {
-	return array_map($function, array_keys($array), $array);
+/** Confirms the hostname and subdomain stored under keys g_HOSTNAME and g_SUBDOMAIN and redirects if necessary. */
+function confirmServer() {
+	$domain = $GLOBALS[g_SUBDOMAIN];
+	$hostname = $GLOBALS[g_HOSTNAME];
+	if (!$_SERVER['HTTPS'] || 0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: https://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
 }
 
-/** Returns the key and value joined by an equals sign, perfect for constructing URL parameters. */
-function keyParam($key, $val) { return $key . '=' . $val; }
+/** Returns true or false whether or not subdomain is 'stage'. */
+function isStageRegion($domain='stage') { return $domain==$GLOBALS[g_SUBDOMAIN]; }
 
-/** Returns the key and value joined by an equal sign, and the value wrapped in double quotes, just right for the attributes of an HTML entity. */
-function attribParam($key, $val) { return "$key=\"$val\""; }
-
-/** Returns !is_null($v) */
-function is_not_null($val) { return !is_null($val); }
-
-/** Returns the elements from $_REQUEST based on the keys in $keys. */
-function filter_request($keys) {
-	return array_intersect_key($_REQUEST, array_flip($keys));
-}
-
-/**
-* Confirms the requested URL and redirects if necessary.
-* Very useful to enforce HTTP or HTTPS.
-* Typically, projects will overload this function with their own version, supplying default values for one or more parameters.
-*/
-function w_confirmServer($hostname, $https=false, $domain='www') {
-	if ($https) {
-		if (!$_SERVER['HTTPS'] || 0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: https://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
-	} else {
-		if ($_SERVER['HTTPS'] || 0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: http://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
-	}
-}
+/** Returns the host, including the current domain, which could be `www` or could be something else, like `stage`. */
+function getHost() { return $GLOBALS[g_SUBDOMAIN] . '.' . $GLOBALS[g_HOSTNAME]; }
 
 /**
 * Sets the location and exits the script to redirect the browser.
@@ -107,18 +87,45 @@ function w_confirmServer($hostname, $https=false, $domain='www') {
 * @uses prefixIfCe()
 * @uses keyParam()
 */
-function w_bailout($keys=[], $others=[], $target=null, $path=null) {
+function bailout($keys=[], $others=[], $target=null, $path=null) {
 	if ($target && is_object($target) && method_exists($target, 'getFragment')) { $fragment = $target->getFragment(); }
-	$query = array_merge(filter_request($keys), $others);
+	$query = array_merge(filterRequest($keys), $others);
 	if (!$path) { $path = getURLPath(); }
-	header('Location: ' . $path . prefixIfCe(implode('&', array_key_map(__NAMESPACE__ . '\keyParam', array_filter($query, __NAMESPACE__ . '\is_not_null'))), '?') . prefixIfCe($fragment, '#'));
+	header('Location: ' . $path . prefixIfCe(implode('&', arrayKeyMap(__NAMESPACE__ . '\keyParam', array_filter($query, __NAMESPACE__ . '\isNotNull'))), '?') . prefixIfCe($fragment, '#'));
 	exit;
+}
+
+//
+// !Helper function for composing/parsing URLs.
+//
+
+/**
+* Maps a function over the key-value pairs of an array
+* @param callable $function a function that takes two parameters, the key and the value
+* @param array $array the array to map
+*/
+function arrayKeyMap($function, $array) {
+	return array_map($function, array_keys($array), $array);
+}
+
+/** Returns the key and value joined by an equals sign, perfect for constructing URL parameters. */
+function keyParam($key, $val) { return $key . '=' . $val; }
+
+/** Returns the key and value joined by an equal sign, and the value wrapped in double quotes, just right for the attributes of an HTML entity. */
+function attribParam($key, $val) { return "$key=\"$val\""; }
+
+/** Returns !is_null($v) */
+function isNotNull($val) { return !is_null($val); }
+
+/** Returns the elements from $_REQUEST based on the keys in $keys. */
+function filterRequest($keys) {
+	return array_intersect_key($_REQUEST, array_flip($keys));
 }
 
 /**
 * Creates a link from the provided 'path', 'query', and 'fragment' keys in the provided array.
 * @param array $components an array of URL components. It only looks for 'scheme', 'host', 'path', 'query', keys', and 'fragment'. The 'query' component is itself an array whose keys and values will be assembled to construct a valid query. The 'key' component is an array of keys whose values will be looked up in $_REQUEST. If 'path' is not provided, it will default to the current URL path. 'host' and 'scheme' can be left off, and the resulting URL will be relative.
-* The approach here is similar to the w_bailout function.
+* The approach here is similar to the bailout function.
 */
 define('PATH', 'path');
 define('QUERY', 'query');
@@ -126,9 +133,9 @@ define('KEYS', 'keys');
 define('SCHEME', 'scheme');
 define('HOST', 'host');
 define('FRAGMENT', 'fragment');
-function w_compose_url($components=[]) {
+function composeURL($components=[]) {
 	$path = $components[PATH] or $path = getURLPath();
-	$query = array_merge((array)$components[QUERY], filter_request((array)$components[KEYS]));
+	$query = array_merge((array)$components[QUERY], filterRequest((array)$components[KEYS]));
 	$query_str = http_build_query($query);
 	return suffixIfCe($components[SCHEME], '://') . $components[HOST] . $path . prefixIfCe($query_str, '?') . prefixIfCe($components[FRAGMENT], '#');
 }
@@ -142,7 +149,7 @@ function w_compose_url($components=[]) {
 * @param int $len
 * @param string $chars characters to use, defaults to the uppercase letters
 */
-function rand_str($len, $chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+function randString($len, $chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
 	for ($i=0; $i<$len; $i++) { $ret .= $chars[mt_rand(0, strlen($chars)-1)]; }
 	return $ret;
 }
@@ -310,6 +317,29 @@ function dcode($string, $addNoScript=true) {
 		return $coded;
 	};
 	return scanElement($string, DCODE_OPEN_TAG, DCODE_CLOSE_TAG, $replacer);
+}
+
+//
+// !Email
+//
+
+/** Send an email. The caller should ensure that `Mail.php` has been require'd or include'd. */
+function sendEmail($message, $headers, $stageTo) {
+	$lc_headers = array_change_key_case($headers);
+	if (!array_key_exists('date', $lc_headers)) { $headers['Date'] = date('r'); }
+	if (!array_key_exists('from', $lc_headers)) { $headers['From'] = 'admin@' . $GLOBALS[g_HOSTNAME]; }
+	if (isStageRegion()) {
+		$origToKey = "X-{$GLOBALS[g_SITEABBREV]}-Original-To";
+		$headers[$origToKey] = $headers['To'];
+		$headers['To'] = $stageTo; // Override 'To' in stage mode.
+	}
+	if (!array_key_exists('content-type', $lc_headers)) { $headers['Content-Type'] = 'text/plain; charset=ISO-8859-1'; }
+	if (!array_key_exists('mime-version', $lc_headers)) { $headers['MIME-Version'] = '1.0'; }
+	$smtp = Mail::factory('mail', "-f{$headers['From']}"); //NOTE: -f sets the envelope sender (which would otherwise be 'www-data').
+	$res = $smtp->send($headers['To'], $headers, $message);
+	if (PEAR::isError($res)) {
+		throw new Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
+	}
 }
 
 ?>

@@ -103,7 +103,7 @@ class wHTMLComposer {
 		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		else if (!is_array($attribs)) { $attribs = []; }
 		if ($class = $attribs['class']) { self::registerClass($class); }
-		$attribString = implode(' ', array_key_map(__NAMESPACE__ . '\attribParam', array_filter($attribs, __NAMESPACE__ . '\is_not_null')));
+		$attribString = implode(' ', array_key_map(__NAMESPACE__ . '\attribParam', array_filter($attribs, __NAMESPACE__ . '\isNotNull')));
 		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
 		else { return '<' . $elem . prefixIfCe($attribString, ' ') . '>' . $content . ( $close ? "</$elem>" : '' ); }
 	}
@@ -160,7 +160,7 @@ class wHTMLComposer {
 	* @param array $links is an array of arrays. Each sub-array contains a KEY_ATTRIBS entry and a KEY_CONTENTS entry.
 	* KEY_ATTRIBS contain the attributes for an A or SPAN element, typically 'href' and 'title'.
 	* KEY_CONTENT contains the text to display as the content of the A or SPAN tab.
-	* KEY_HREF (optional) contains the pieces to send to compose_url and will become the 'href' attribute.
+	* KEY_HREF (optional) contains the pieces to send to composeURL and will become the 'href' attribute.
 	*/
 	function composeActionLinks($links) {
 		if (!count($links)) { return; }
@@ -169,7 +169,7 @@ class wHTMLComposer {
 			$this->beginElement('p', $item[KEY_WRAP_CLASS]);
 			$attribs = $item[KEY_ATTRIBS];
 			if (!$attribs['class']) { $attribs['class'] = static::CLS_ALINK; }
-			if ($item[KEY_HREF]) { $attribs['href'] = w_compose_url($item[KEY_HREF]); }
+			if ($item[KEY_HREF]) { $attribs['href'] = composeURL($item[KEY_HREF]); }
 			$this->addElement(( $attribs['href'] ? 'a' : 'span' ), $attribs, $item[KEY_CONTENT]);
 			$this->endElement(); // <P>
 		}
