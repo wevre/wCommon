@@ -103,7 +103,7 @@ class wHTMLComposer {
 		if (is_string($attribs)) { $attribs = [ 'class'=>$attribs ]; }
 		else if (!is_array($attribs)) { $attribs = []; }
 		if ($class = $attribs['class']) { self::registerClass($class); }
-		$attribString = implode(' ', array_key_map(__NAMESPACE__ . '\attribParam', array_filter($attribs, __NAMESPACE__ . '\isNotNull')));
+		$attribString = implode(' ', arrayKeyMap(__NAMESPACE__ . '\attribParam', array_filter($attribs, __NAMESPACE__ . '\isNotNull')));
 		if (self::isEmptyElement($elem)) { return '<' . $elem . prefixIfCe($attribString, ' ') . ' />'; }
 		else { return '<' . $elem . prefixIfCe($attribString, ' ') . '>' . $content . ( $close ? "</$elem>" : '' ); }
 	}
