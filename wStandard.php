@@ -18,8 +18,6 @@ namespace wCommon;
 // !Keys for global variables.
 //
 
-define('g_CNXN', 'g_CNXN');
-define('g_ACCT', 'g_ACCT');
 define('g_SUBDOMAIN', 'g_SUBDOMAIN');
 define('g_SITECODE', 'g_SITECODE');
 define('g_SITENAME', 'g_SITENAME');
@@ -47,7 +45,7 @@ function errorLog($msg, $excp=null, $ident=[]) {
 		$ident[] = $GLOBALS[g_ACCT];
 		$ident[] = getURLPAth();
 	}
-	error_log('[' . implode($idee, '-') . "] $msg");
+	error_log('[' . implode($ident, '-') . "] $msg");
 	if ($excp) { error_log(formatException($excp)); }
 }
 
@@ -335,9 +333,9 @@ function sendEmail($message, $headers, $stageTo) {
 	}
 	if (!array_key_exists('content-type', $lc_headers)) { $headers['Content-Type'] = 'text/plain; charset=ISO-8859-1'; }
 	if (!array_key_exists('mime-version', $lc_headers)) { $headers['MIME-Version'] = '1.0'; }
-	$smtp = Mail::factory('mail', "-f{$headers['From']}"); //NOTE: -f sets the envelope sender (which would otherwise be 'www-data').
+	$smtp = \Mail::factory('mail', "-f{$headers['From']}"); //NOTE: -f sets the envelope sender (which would otherwise be 'www-data').
 	$res = $smtp->send($headers['To'], $headers, $message);
-	if (PEAR::isError($res)) {
+	if (\PEAR::isError($res)) {
 		throw new Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
 	}
 }
