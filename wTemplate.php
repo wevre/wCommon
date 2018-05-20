@@ -83,9 +83,9 @@ class wTemplate extends Template {
 		if ($_SESSION[self::SKEY_CONFIRM]) { foreach ($_SESSION[self::SKEY_CONFIRM] as $msg) { $this->displayMessage($msg); } unset($_SESSION[self::SKEY_CONFIRM]); }
 	}
 
-	function show() {
+	function show($block = '__global__') {
 		if ($this->onloads) { $this->parseBlock('BLK-ONLOADS', [ 'ONLOAD'=>implode(' ', $this->onloads), ]); }
-		parent::show();
+		parent::show($block);
 	}
 
 	function getPageTitle() {
