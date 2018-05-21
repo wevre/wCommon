@@ -14,8 +14,6 @@ namespace wCommon;
 *
 */
 
-require_once 'HTML/Template/Sigma.php';
-
 define('g_PAGE_TITLE', 'g_PAGE_TITLE');
 
 function setPageTitle($title) { $GLOBALS[g_PAGE_TITLE] = $title; }
