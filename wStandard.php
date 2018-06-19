@@ -42,7 +42,6 @@ function formatException($e) {
 */
 function errorLog($msg, $excp=null, $ident=[]) {
 	if (!$ident) {
-		$ident[] = $GLOBALS[g_ACCT];
 		$ident[] = getURLPAth();
 	}
 	error_log('[' . implode($ident, '-') . "] $msg");
