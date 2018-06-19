@@ -42,7 +42,7 @@ class dsAccount extends dStruct\dStruct {
 		];
 	}
 
-	static function shouldFetchKey() { return yes; }
+	static function shouldFetchKey() { return true; }
 
 	//
 	// !Shared account

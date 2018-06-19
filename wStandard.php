@@ -102,7 +102,7 @@ function bailout($keys=[], $others=[], $target=null, $path=null) {
 * @param callable $function a function that takes two parameters, the key and the value
 * @param array $array the array to map
 */
-function arrayKeyMap($function, $array) {
+function arrayKeyMap($function, $array=[]) {
 	return array_map($function, array_keys($array), $array);
 }
 
@@ -116,7 +116,7 @@ function attribParam($key, $val) { return "$key=\"$val\""; }
 function isNotNull($val) { return !is_null($val); }
 
 /** Returns the elements from $_REQUEST based on the keys in $keys. */
-function filterRequest($keys) {
+function filterRequest($keys=[]) {
 	return array_intersect_key($_REQUEST, array_flip($keys));
 }
 
@@ -281,7 +281,7 @@ function getDateAndIntervalDisplay($datestring) { if (!$datestring) { return '';
 * The tags are not passed to $replacer. The result returned by $replacer will replace the original tags and content.
 * @param string $string the text to search
 * @param string $open_tag the custom opening tag
-* @param string $end_tag the custom closing tag
+* @param string $close_tag the custom closing tag
 * @param callable $replacer a function to replace the found text
 */
 function scanElement($string, $open_tag, $close_tag, $replacer) {
@@ -339,5 +339,3 @@ function sendEmail($message, $headers, $stageTo) {
 		throw new Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
 	}
 }
-
-?>
