@@ -42,7 +42,7 @@ function formatException($e) {
 */
 function errorLog($msg, $excp=null, $ident=[]) {
 	if (!$ident) {
-		$ident[] = getURLPAth();
+		$ident[] = getURLPath();
 	}
 	error_log('[' . implode($ident, '-') . "] $msg");
 	if ($excp) { error_log(formatException($excp)); }
@@ -325,6 +325,7 @@ function sendEmail($message, $headers, $stageTo) {
 	$lc_headers = array_change_key_case($headers);
 	if (!array_key_exists('date', $lc_headers)) { $headers['Date'] = date('r'); }
 	if (!array_key_exists('from', $lc_headers)) { $headers['From'] = 'admin@' . $GLOBALS[g_HOSTNAME]; }
+   if (!array_key_exists('sender', $lc_headers)) { $headers['Sender'] = $headers['From']; }
 	if (isStageRegion()) {
 		$origToKey = "X-{$GLOBALS[g_SITEABBREV]}-Original-To";
 		$headers[$origToKey] = $headers['To'];
@@ -332,9 +333,9 @@ function sendEmail($message, $headers, $stageTo) {
 	}
 	if (!array_key_exists('content-type', $lc_headers)) { $headers['Content-Type'] = 'text/plain; charset=ISO-8859-1'; }
 	if (!array_key_exists('mime-version', $lc_headers)) { $headers['MIME-Version'] = '1.0'; }
-	$smtp = \Mail::factory('mail', "-f{$headers['From']}"); //NOTE: -f sets the envelope sender (which would otherwise be 'www-data').
+	$smtp = \Mail::factory('mail', "-f{$headers['Sender']}"); //NOTE: -f sets the envelope sender (which would otherwise be the current user). Either way it seems sender must be a known user to Postfix or strange things happen.
 	$res = $smtp->send($headers['To'], $headers, $message);
 	if (\PEAR::isError($res)) {
-		throw new Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
+		throw new \Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
 	}
 }
