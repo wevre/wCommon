@@ -23,6 +23,7 @@ define('g_SITECODE', 'g_SITECODE');
 define('g_SITENAME', 'g_SITENAME');
 define('g_HOSTNAME', 'g_HOSTNAME');
 define('g_SITEABBREV', 'g_SITEABBREV');
+define('g_POSTMASTER', 'g_POSTMASTER');
 
 //
 // !Error functions
@@ -333,7 +334,7 @@ function sendEmail($message, $headers, $stageTo) {
 	}
 	if (!array_key_exists('content-type', $lc_headers)) { $headers['Content-Type'] = 'text/plain; charset=ISO-8859-1'; }
 	if (!array_key_exists('mime-version', $lc_headers)) { $headers['MIME-Version'] = '1.0'; }
-	$smtp = \Mail::factory('mail', "-f{$headers['Sender']}"); //NOTE: -f sets the envelope sender (which would otherwise be the current user). Either way it seems sender must be a known user to Postfix or strange things happen.
+	$smtp = \Mail::factory('mail');
 	$res = $smtp->send($headers['To'], $headers, $message);
 	if (\PEAR::isError($res)) {
 		throw new \Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
