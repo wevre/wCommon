@@ -38,7 +38,7 @@ function formatException($e) {
 
 /**
 * Prints error information, including details on an exception, if c’è, to the standard error log.
-*@param array $ident is an array of items to be included as identifiers, they will be concatenated with '-'. If no $ident is provided, it will default to the current account (from $GLOBALS[g_ACCT] if c’è) and path.
+*@param array $ident is an array of items to be included as identifiers, they will be concatenated with '-'. If no $ident is provided, it will default to current path.
 * @uses formatException()
 */
 function errorLog($msg, $excp=null, $ident=[]) {
