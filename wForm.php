@@ -631,5 +631,3 @@ class wFormBuilder {
 	}
 
 }
-
-?>
