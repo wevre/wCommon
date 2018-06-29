@@ -12,9 +12,9 @@ namespace wCommon;
 *
 */
 
-use dStruct\dConnection;
+use \dStruct\dConnection;
 
-class dsAccount extends dStruct\dStruct {
+class dsAccount extends \dStruct\dStruct {
 
 	const SKEY_URL_TARGET = 'url-target';
 	const SKEY_ACCOUNT_IDEE = 'account-idee';
@@ -85,7 +85,7 @@ class dsAccount extends dStruct\dStruct {
 			$account->onSuccessfulLogin();
 			$cnxn->commitTransaction();
 			exit;
-		} catch (Exception $e) { wCommon\errorLog("Exception fetching account {$account}", $e); } while(0);
+		} catch (Exception $e) { \wCommon\errorLog("Exception fetching account {$account}", $e); } while(0);
 		// If we reach this point we had an error validating the user, return null.
 		$cnxn->rollbackTransaction();
 		StandardTemplate::addErrorMessage(static::getLoginErrorMessage());
