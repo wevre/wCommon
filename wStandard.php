@@ -214,7 +214,7 @@ function getTimeDisplay($timestamp=null, $sep='&nbsp;') {
 	$test = date('g:i', $timestamp);
 	if ($test == '12:00') { return 'noon'; }
 	else if ($test == '00:00') { return 'midnight'; }
-	return ( '00' == substr($test, -2) ?  substr($test, 0, -3) : $test ) . $sep . '<span class="ampm">' . date('a', $timestamp) . '</span>';
+	return ( '00' == substr($test, -2) ? substr($test, 0, -3) : $test ) . $sep . '<span class="ampm">' . date('a', $timestamp) . '</span>';
 }
 
 /**
@@ -326,7 +326,7 @@ function sendEmail($message, $headers, $stageTo) {
 	$lc_headers = array_change_key_case($headers);
 	if (!array_key_exists('date', $lc_headers)) { $headers['Date'] = date('r'); }
 	if (!array_key_exists('from', $lc_headers)) { $headers['From'] = 'admin@' . $GLOBALS[g_HOSTNAME]; }
-   if (!array_key_exists('sender', $lc_headers)) { $headers['Sender'] = $headers['From']; }
+	if (!array_key_exists('sender', $lc_headers)) { $headers['Sender'] = $headers['From']; }
 	if (isStageRegion()) {
 		$origToKey = "X-{$GLOBALS[g_SITEABBREV]}-Original-To";
 		$headers[$origToKey] = $headers['To'];

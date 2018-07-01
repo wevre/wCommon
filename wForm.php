@@ -263,7 +263,7 @@ class wFormBuilder {
 	//
 
 	/**
-	* Adds text with a label. Use it for a value that isn't editable, but should be displayed consistent with  other editable fields.
+	* Adds text with a label. Use it for a value that isn't editable, but should be displayed consistent with other editable fields.
 	* @param string $label the label for the text
 	* @param string $value the text itself
 	*/

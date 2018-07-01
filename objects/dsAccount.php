@@ -117,7 +117,7 @@ class dsAccount extends \dStruct\dStruct {
 			}
 			return $account;
 		} catch (Exception $e) { errorLog("Exception fetching account with idee {$idee}.", $e); } while(0);
-		//  Error validating account. Return null.
+		// Error validating account. Return null.
 		return null;
 	}
 
@@ -148,7 +148,7 @@ class dsAccount extends \dStruct\dStruct {
 		if ($_COOKIE[self::COOKIE_IDEE]) { return; }
 		if (!($cookie = dsCookie::createForAccount($this))) { return; }
 		$expire = time() + 60*60*24*7*dsCookie::WEEKS; // Expires in 6 weeks.
-		setcookie(self::COOKIE_IDEE,  $cookie->value, $expire, '/', getHost(), true);
+		setcookie(self::COOKIE_IDEE, $cookie->value, $expire, '/', getHost(), true);
 	}
 
 	/** Clear account cookie. */
