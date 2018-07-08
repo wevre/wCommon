@@ -2,21 +2,26 @@ project : wCommon ToDo
 	author : Mike Weaver
 	created : 2015-02-13
 
-[] (2018-07-05)
+[] (2018-07-08) : Login helper
+	Not sure why I named the class and the file "wLoginHelper". I could have kept
+	the filename simpler, like "wLogin", which matches the pattern of the other
+	files in this little library.
+
+[] (2018-07-05) : Common user, cookie objects
 	Started a common implementation of `dsAccount` and `dsCookie`, but removed it
 	in lieu of `wLoginHelper`. However, a common `dsCookie` (and maybe also
 	`dsUser`) might be handy, if can figure out a way to integrate it cleanly in
 	all the different users of wCommon.
 
-[] (2018-03-03)
+[] (2018-03-03) : Bespoke template
 	Create a template, based on wComposer, and remove dependency on
 	`HTML_Template_Sigma`, which isn't going anywhere soon, but has been out of
 	active development for a few years now. Template needs are so simple that a
 	not-too-complicated class could produce it on demand.
 
-[] (2017-09-30)
+[] (2017-09-30) : Clean up comments
 	Review comments and make them complete sentences with initial capital and
 	trailing period. Limit use of "the" and "a[n]".
 
-[] (2016-10-02)
+[] (2016-10-02) : HTML5
 	Update the template to use HTML5
