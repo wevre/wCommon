@@ -325,8 +325,8 @@ function dcode($string, $addNoScript=true) {
 function sendEmail($message, $headers, $stageTo) {
 	$lc_headers = array_change_key_case($headers);
 	if (!array_key_exists('date', $lc_headers)) { $headers['Date'] = date('r'); }
-	if (!array_key_exists('from', $lc_headers)) { $headers['From'] = 'admin@' . $GLOBALS[g_HOSTNAME]; }
-	if (!array_key_exists('sender', $lc_headers)) { $headers['Sender'] = $headers['From']; }
+	if (!array_key_exists('from', $lc_headers)) { $headers['From'] = $GLOBALS[g_POSTMASTER]; }
+	if (!array_key_exists('sender', $lc_headers)) { $headers['Sender'] = $GLOBALS[g_POSTMASTER]; }
 	if (isStageRegion()) {
 		$origToKey = "X-{$GLOBALS[g_SITEABBREV]}-Original-To";
 		$headers[$origToKey] = $headers['To'];
@@ -334,7 +334,14 @@ function sendEmail($message, $headers, $stageTo) {
 	}
 	if (!array_key_exists('content-type', $lc_headers)) { $headers['Content-Type'] = 'text/plain; charset=ISO-8859-1'; }
 	if (!array_key_exists('mime-version', $lc_headers)) { $headers['MIME-Version'] = '1.0'; }
-	$smtp = \Mail::factory('mail');
+	//NOTE: Flag -f sets the envelope sender. Without this, the envelope sender
+	//becomes the user running the script ("dac" or "www-data"), which is fine
+	//for delivery, and maybe fine for replies, but it is definitely NOT fine for
+	//bounces, which disappear.
+	$parsed = mailparse_rfc822_parse_addresses($headers['From']);
+	if ($parsed) { $envelope_sender = $parsed[0]['address']; }
+	else { $envelope_sender = $GLOBALS[g_POSTMASTER]; }
+	$smtp = \Mail::factory('mail', '-f' . $envelope_sender);
 	$res = $smtp->send($headers['To'], $headers, $message);
 	if (\PEAR::isError($res)) {
 		throw new \Exception('Error sending email `' . $headers['Subject'] . '` to `' . $headers['To'] . '` from `' . $headers['From'] . '`. SMTP error: ' . $res->getMessage());
