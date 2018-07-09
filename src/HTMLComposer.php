@@ -10,11 +10,11 @@ namespace wCommon;
 * @author Mike Weaver
 * @created 2016-03-23
 *
-* @version 1.0
+* @version 1.0.1
 *
 */
 
-require_once 'wCommon/wStandard.php';
+require_once 'wCommon/Standard.php';
 
 define('KEY_CONTENT', 'content');
 define('KEY_ATTRIBS', 'attribs');
@@ -22,7 +22,7 @@ define('KEY_HREF', 'href');
 define('KEY_WRAP_CLASS', 'wrap-class');
 
 /** Helper class for composing HTML (or portions thereof). */
-class wHTMLComposer {
+class HTMLComposer {
 
 	public $fIndent = true;
 	public $fDebug = false;

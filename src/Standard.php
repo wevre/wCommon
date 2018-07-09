@@ -10,7 +10,7 @@ namespace wCommon;
 * @author Mike Weaver
 * @created 2014-03-01
 *
-* @version 1.0
+* @version 1.0.1
 *
 */
 

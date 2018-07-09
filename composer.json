@@ -1,0 +1,31 @@
+{
+	"name": "wevrem/wCommon",
+	"description": "Useful PHP functions and classes",
+	"type": "library",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Mike Weaver",
+			"role": "developer"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"wCommon\\": "src/"
+		},
+		"files" : [ "src/Standard.php"]
+	},
+	"support": {
+		"source": "https://github.com/wevrem/wCommon"
+	},
+	"require": {
+		"wevrem/dStruct": "*",
+		"pear/html_template_sigma": "dev-wevrem-constructor"
+	},
+	"repositories": [
+		{
+			"type": "git",
+			"url": "https://github.com/wevrem/HTML_Template_Sigma"
+		}
+	]
+}

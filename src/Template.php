@@ -1,7 +1,7 @@
 <?php
 namespace wCommon;
 /**
-* Subclasses that expand the functionality of HTML_Template_Sigma.
+* Subclasses that expands TemplateSigma.
 *
 * @copyright 2014-2015 Mike Weaver
 *
@@ -10,7 +10,7 @@ namespace wCommon;
 * @author Mike Weaver
 * @created 2014-03-04
 *
-* @version 1.0
+* @version 1.0.1
 *
 */
 
@@ -18,55 +18,16 @@ define('g_PAGE_TITLE', 'g_PAGE_TITLE');
 
 function setPageTitle($title) { $GLOBALS[g_PAGE_TITLE] = $title; }
 
-/** A subclass of HTML_Template_Sigma that adds some very convenient methods. */
-class Template extends \HTML_Template_Sigma {
-
-	/**
-	* Constructor for Template.
-	* It loads the template file $tfile.
-	* Subclasses should override and provide defaults for $tdir and $cdir.
-	* @param string $tfile template file
-	* @param string $tdir template directory
-	* @param string $cdir cache directory
-	*/
-	function __construct($tfile, $tdir, $cdir=null) {
-		parent::__construct($tdir, $cdir);
-		$this->loadTemplateFile($tfile);
-	}
-
-	/**
-	* Sets variables and parses a block.
-	* By default this parses the block, meaning placeholder variables are replaced and the block is written out.
-	* You can prevent that with the $doParse parameter, for situations where you need to replace variables but delay parsing.
-	* @param string $block the block in the template to parse; if `null`, the __global__ block will be used
-	* @param array $varArray array of block variables mapped to replacement strings
-	* @param bool $doParse indicates whether or not to parse the block
-	*/
-	function parseBlock($block, $varArray=null, $doParse=true) { // sets variables and parses the block
-		if (!$block) { $block = '__global__'; }
-		$this->setCurrentBlock($block);
-		if (!is_null($varArray)) { $this->setVariable($varArray); }
-		if ($doParse) { $this->parseCurrentBlock(); }
-	}
-
-	/**
-	* Sets block variables but skips parsing.
-	* @param string $block the block in the template to parse; if `null`, the __global__ block will be used
-	* @param array $varArray array of block variables mapped to replacement strings
-	*/
-	function setBlockVariables($block, $varArray=null) {
-		$this->parseBlock($block, $varArray, false);
-	}
-
-}
-
-/** A subclass of Template that includes more convenience methods for common page elements. See the file `template.tmpl` for a sample template that works with these methods. */
-class wTemplate extends Template {
+/**
+* A subclass of TemplateSigma that includes more convenience methods for common
+* page elements. See the file `template.tmpl` for a sample template that works
+* with these methods. */
+class Template extends TemplateSigma {
 
 	const SKEY_ERROR = 'tmpl-error';
 	const SKEY_CONFIRM = 'tmpl-confirm';
 
-	const CLASS_CP = '\wCommon\wHTMLComposer';
+	const CLASS_CP = '\wCommon\HTMLComposer';
 
 	public $cp; // A composer object for use by the template.
 

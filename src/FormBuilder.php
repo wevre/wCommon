@@ -10,11 +10,11 @@ namespace wCommon;
 * @author Mike Weaver
 * @created 2013-03-02
 *
-* @version 1.0
+* @version 1.0.1
 *
 */
 
-require_once 'wCommon/wStandard.php';
+require_once 'wCommon/Standard.php';
 
 /** Function to display different line endings. Used by debug logic in the checksum methods. */
 function showLineEndings($string) { errorLog(str_replace(array("\r\n", "\n\r", "\r", ), array("CRLF\n", "LFCR\n", "CR\n", ), $string)); }
@@ -32,7 +32,7 @@ function normalizedLineEndings($s) {
 * NOTE: Avoid using hyphens in the element names in the form, it makes javascript harder to access things by name.
 * NOTE: The "id" is set for form elements using the supplied "name"; so keep names unique just like you would id's.
 */
-class wFormBuilder {
+class FormBuilder {
 
 	public static $fDebug = false;
 

@@ -10,14 +10,14 @@ namespace wCommon;
 * @author Mike Weaver
 * @created 2018-07-04
 *
-* @version 1.0
+* @version 1.0.1
 *
 */
 
-require_once 'wCommon/wStandard.php';
+require_once 'wCommon/Standard.php';
 
 /** Helper class for user login and logout. Clients create a subclass and override the public methods indicated below. */
-class wLoginHelper {
+class LoginHelper {
 
 	const SKEY_LOCATION = 'url-target';
 	const SKEY_USER = 'user-name';
