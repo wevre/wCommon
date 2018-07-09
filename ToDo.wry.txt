@@ -2,10 +2,9 @@ project : wCommon ToDo
 	author : Mike Weaver
 	created : 2015-02-13
 
-[] (2018-07-08) : Login helper
-	Not sure why I named the class and the file "wLoginHelper". I could have kept
-	the filename simpler, like "wLogin", which matches the pattern of the other
-	files in this little library.
+[] (2018-07-09) : Composer integration
+	Add a `composer.json` file and reorganize as necessary to work with Composer
+	and Packagist.
 
 [] (2018-07-05) : Common user, cookie objects
 	Started a common implementation of `dsAccount` and `dsCookie`, but removed it
