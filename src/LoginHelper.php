@@ -14,8 +14,6 @@ namespace wCommon;
 *
 */
 
-require_once 'wCommon/Standard.php';
-
 /** Helper class for user login and logout. Clients create a subclass and override the public methods indicated below. */
 class LoginHelper {
 

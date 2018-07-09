@@ -14,8 +14,6 @@ namespace wCommon;
 *
 */
 
-require_once 'wCommon/Standard.php';
-
 define('KEY_CONTENT', 'content');
 define('KEY_ATTRIBS', 'attribs');
 define('KEY_HREF', 'href');

@@ -14,8 +14,6 @@ namespace wCommon;
 *
 */
 
-require_once 'wCommon/Standard.php';
-
 /** Function to display different line endings. Used by debug logic in the checksum methods. */
 function showLineEndings($string) { errorLog(str_replace(array("\r\n", "\n\r", "\r", ), array("CRLF\n", "LFCR\n", "CR\n", ), $string)); }
 
