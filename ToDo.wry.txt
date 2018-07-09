@@ -8,12 +8,12 @@ project : wCommon ToDo
 
 [] (2018-07-05) : Common user, cookie objects
 	Started a common implementation of `dsAccount` and `dsCookie`, but removed it
-	in lieu of `wLoginHelper`. However, a common `dsCookie` (and maybe also
+	in lieu of `LoginHelper`. However, a common `dsCookie` (and maybe also
 	`dsUser`) might be handy, if can figure out a way to integrate it cleanly in
 	all the different users of wCommon.
 
 [] (2018-03-03) : Bespoke template
-	Create a template, based on wComposer, and remove dependency on
+	Create a template, based on HTMLComposer, and remove dependency on
 	`HTML_Template_Sigma`, which isn't going anywhere soon, but has been out of
 	active development for a few years now. Template needs are so simple that a
 	not-too-complicated class could produce it on demand.

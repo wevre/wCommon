@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <!--
-	This document is a sample template that works with the `wTemplate` class defined in `wTemplate.php`.
+	This document is a sample template that works with the `Template` class defined in `Template.php`.
 	It is meant to be copied and modified slightly for your particular project, although not much modification is needed to get started.
 	There are two TODO's below:
 		(1) Include the elements for the site's favicon. I don't typically "parameterize" that, meaning I don't control it with page-specific logic but just hard code it right into the template so it is the same for every page on the site. I've included some example elements below.
@@ -39,10 +39,10 @@
 
 		<!-- BEGIN BLK-MESSAGES -->
 		<!--
-			The `wTemplate` class has functionality for stashing messages in the SESSION, and then displaying them on the next loaded page.
-			The "msg-wrap" id and "confirm" class below are placeholders. You can choose to set up style rules to flesh them out, or replace them completely, as there are no dependencies within `wTemplate`.
-			There is a dependency, however, on the template block `BLK-MSG` which is referenced in the `displayMessage()` method of `wTemplate`.
-			Note that for error messages, the default behavior of `wTemplate` is to add an additional class (via the `MSG-XCLASS` template variable) to further style an error message. See the constructor for `wTemplate` and the method `displayMessage()` for more details.
+			The `Template` class has functionality for stashing messages in the SESSION, and then displaying them on the next loaded page.
+			The "msg-wrap" id and "confirm" class below are placeholders. You can choose to set up style rules to flesh them out, or replace them completely, as there are no dependencies within `Template`.
+			There is a dependency, however, on the template block `BLK-MSG` which is referenced in the `displayMessage()` method of `Template`.
+			Note that for error messages, the default behavior of `Template` is to add an additional class (via the `MSG-XCLASS` template variable) to further style an error message. See the constructor for `Template` and the method `displayMessage()` for more details.
 		-->
 		<div id="msg-wrap"><!-- BEGIN BLK-MSG --><div class="confirm {MSG-XCLASS}">{MSG}</div><!-- END BLK-MSG --></div>
 		<!-- END BLK-MESSAGES -->

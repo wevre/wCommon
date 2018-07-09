@@ -30,57 +30,57 @@ class LoginHelper {
 
 	/** Return current user. */
 	function getCurrentUser() {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Set current user. */
 	function setCurrentUser($user) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return flag indicating if user is disabled. */
 	function isDisabledUser($user) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return true or false if user has permissions. */
 	function hasPermissionUser($user) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return date of user login. */
 	function getUserLoginDate($user) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Set date of user login. */
 	function setUserLoginDate($user, $date) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return a token to identify user. */
 	function tokenForUser($user) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return user for token. */
 	function userForToken($token) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return cookie for user. */
 	function cookieForUser($user) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Return user for cookie. */
 	function userForCookie($cookie) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	/** Remove objects tied to cookie. */
 	function deleteCookie($cookie) {
-		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of wLoginHelper');
+		throw new \Exception('Function `' . __FUNCTION__ . '` to be overridden by subclass of LoginHelper');
 	}
 
 	//
@@ -150,7 +150,7 @@ class LoginHelper {
 		// Create a message about the last time logged in.
 		if ($prior = $_SESSION[self::SKEY_LAST_LOGIN_DATE]) {
 			unset($_SESSION[self::SKEY_LAST_LOGIN_DATE]);
-			wTemplate::addConfirmMessage('You last logged in ' . getDateAndIntervalDisplay($prior) . '.');
+			Template::addConfirmMessage('You last logged in ' . getDateAndIntervalDisplay($prior) . '.');
 		}
 	}
 

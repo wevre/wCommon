@@ -61,13 +61,13 @@ class FormBuilder {
 	const HASH_LEN = -7; // Will be used with substr function to take the last n characters of the hash.
 	const NORMALIZED_SUFFIX = '-normalized';
 
-	/** An instance of wHTMLComposer for generating HTML. A new composer will be created when a new class instance is created, but users can replace it with their own if desired. */
+	/** An instance of HTMLComposer for generating HTML. A new composer will be created when a new class instance is created, but users can replace it with their own if desired. */
 	public $cp;
 
 	/**
-	* Creates a new wFormBuilder.
+	* Creates a new FormBuilder.
 	* Users of this class will typically subclass to provide project-specific functionality.
-	* This class will create its own internal wHTMLComposer to generate HTML.
+	* This class will create its own internal HTMLComposer to generate HTML.
 	* @param string $action the URL where the from will be sent
 	* @param string $method either 'post' or 'get', defaults to 'post'
 	*/
@@ -75,7 +75,7 @@ class FormBuilder {
 		if (!$attribs['action']) { $attribs['action'] = getURLPath(); }
 		if (!$attribs['method']) { $attribs['method'] = 'post'; }
 		if ($cp) { $this->cp = $cp; }
-		else { $this->cp = new wHTMLComposer(); }
+		else { $this->cp = new HTMLComposer(); }
 		$this->cp->beginElement('form', $attribs);
 	}
 
@@ -187,7 +187,7 @@ class FormBuilder {
 	* When you first create the form, add a text area with `addTextArea` and include the 'checksum' flag. Then this function is used on the back end to examine the results in $_POST versus the original checksum.
 	* Typical use looks something like this, where we test if the hashes match and if not, update the value on our internal object.
 	* <code>
-	* wFormBuilder::testChecksum(POST_ESSAY) or $myObject->essay = wFormBuilder::getNormalized(POST_ESSAY);
+	* FormBuilder::testChecksum(POST_ESSAY) or $myObject->essay = FormBuilder::getNormalized(POST_ESSAY);
 	* </code>
 	* In the above example, if the hashes match, then what we already have stored in our internal object is current, no need to update.
 	* This is especially useful if a changed value triggers a lot of extra processing.
@@ -206,8 +206,8 @@ class FormBuilder {
 
 	/** While testing the checksum, the form builder normalizes line endings and caches those in $_POST. This function retrieves that normalized version (or creates it lazily if it was never created by a call to `testChecksum`. */
 	static function getNormalized($name) {
-		if (array_key_exists($name . wFormBuilder::NORMALIZED_SUFFIX, $_POST)) {
-			return $_POST[$name . wFormBuilder::NORMALIZED_SUFFIX];
+		if (array_key_exists($name . self::NORMALIZED_SUFFIX, $_POST)) {
+			return $_POST[$name . self::NORMALIZED_SUFFIX];
 		} else {
 			return normalizedLineEndings(trim($_POST[$name]));
 		}
