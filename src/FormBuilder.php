@@ -129,7 +129,8 @@ class FormBuilder {
 	* @param string $value the value to test for uniqueness
 	* @param string $name the form name associated with this value; also where an error will be set if needed
 	*/
-	static function testUniqueKey($cnxn, $gname, $value, $name) {
+	static function testUniqueKey($gname, $value, $name, $cnxnKey=null) {
+		$cnxn = dConnection::sharedConnection($cnxnKey);
 		if (!$cnxn->isUniqueKey($gname, $value)) { self::setSessionError($name, 'Must be unique'); return false; }
 		else { return true; }
 	}

@@ -20,6 +20,7 @@
 	},
 	"require": {
 		"wevrem/dStruct": "*",
+		"pear/mail": "^1.4",
 		"pear/html_template_sigma": "dev-wevrem-constructor"
 	},
 	"repositories": [
