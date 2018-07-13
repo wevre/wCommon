@@ -321,7 +321,7 @@ function dcode($string, $addNoScript=true) {
 // !Email
 //
 
-/** Send an email. The caller should ensure that `Mail.php` has been require'd or include'd. */
+/** Send an email. */
 function sendEmail($message, $headers, $stageTo) {
 	$lc_headers = array_change_key_case($headers);
 	if (!array_key_exists('date', $lc_headers)) { $headers['Date'] = date('r'); }
