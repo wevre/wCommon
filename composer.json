@@ -19,7 +19,7 @@
 		"source": "https://github.com/wevrem/wCommon"
 	},
 	"require": {
-		"wevrem/dStruct": "*",
+		"wevrem/dStruct": "dev-keyed_cnxn",
 		"pear/mail": "^1.4",
 		"pear/html_template_sigma": "dev-wevrem-constructor"
 	},
