@@ -21,6 +21,8 @@
 	"require": {
 		"wevrem/dStruct": "dev-keyed_cnxn",
 		"pear/mail": "^1.4",
+		"pear/net_smtp": "^1.7",
+		"pear/auth_sasl": "^1.1",
 		"pear/html_template_sigma": "dev-wevrem-constructor"
 	},
 	"repositories": [
