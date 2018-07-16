@@ -338,7 +338,7 @@ function sendEmail($message, $headers, $stageTo) {
 	//becomes the user running the script ("dac" or "www-data"), which is fine
 	//for delivery, and maybe fine for replies, but it is definitely NOT fine for
 	//bounces, which disappear.
-	$parsed = mailparse_rfc822_parse_addresses($headers['From']);
+	$parsed = \mailparse_rfc822_parse_addresses($headers['From']);
 	if ($parsed) { $envelope_sender = $parsed[0]['address']; }
 	else { $envelope_sender = $GLOBALS[g_POSTMASTER]; }
 	$smtp = \Mail::factory('mail', '-f' . $envelope_sender);
