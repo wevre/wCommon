@@ -161,7 +161,7 @@ class HTMLComposer {
 	* KEY_HREF (optional) contains the pieces to send to composeURL and will become the 'href' attribute.
 	*/
 	function composeActionLinks($links) {
-		if ($links || !count($links)) { return; }
+		if (!$links || !count($links)) { return; }
 		foreach ($links as $item) {
 			if (!$item) { continue; }
 			$this->beginElement('p', $item[KEY_WRAP_CLASS]);
