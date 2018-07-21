@@ -136,7 +136,7 @@ EOT
 
 	/** Adds an error message to the session-stored list. They will be displayed on the next page load. The $onlyIfEmpty parameter, if true, will prevent a message from being added if one already exists. */
 	static function addErrorMessage($msg, $onlyIfEmpty=false) {
-		if ($onlyIfEmpty && count($_SESSION[self::SKEY_ERROR])>0) { return; }
+		if ($onlyIfEmpty && count((array)$_SESSION[self::SKEY_ERROR])>0) { return; }
 		$_SESSION[self::SKEY_ERROR][] = $msg;
 	}
 
