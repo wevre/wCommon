@@ -66,8 +66,10 @@ function confirmServer() {
 	if (!$_SERVER['HTTPS'] || 0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: https://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
 }
 
-/** Returns true or false whether or not subdomain is 'stage'. */
-function isStageRegion($domain='stage') { return $domain==$GLOBALS[g_SUBDOMAIN]; }
+// Indicates if subdomain begins with 'stage'.
+function isStageRegion($domain='stage') {
+	return 0===strpos($GLOBALS[g_SUBDOMAIN], $domain);
+}
 
 /** Returns the host, including the current domain, which could be `www` or could be something else, like `stage`. */
 function getHost() { return $GLOBALS[g_SUBDOMAIN] . '.' . $GLOBALS[g_HOSTNAME]; }

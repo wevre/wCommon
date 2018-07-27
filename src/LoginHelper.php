@@ -150,6 +150,8 @@ class LoginHelper {
 		// Create a message about the last time logged in.
 		if ($prior = $_SESSION[self::SKEY_LAST_LOGIN_DATE]) {
 			unset($_SESSION[self::SKEY_LAST_LOGIN_DATE]);
+			//Could store `Template` as a const and then call this with
+			// call_user_func([ static::TEMPLATE_CLASS, "addConfirmMessage"], ...)
 			Template::addConfirmMessage('You last logged in ' . getDateAndIntervalDisplay($prior) . '.');
 		}
 	}
