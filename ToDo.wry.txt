@@ -2,13 +2,9 @@ project : wCommon ToDo
 	author : Mike Weaver
 	created : 2015-02-13
 
-[X] (2018-07-10) : Mail dependency
-	Add pear/mail to our composer requires. Also added pear/net_smtp and
-	pear/auth_sasl as recommended by pear/mail.
-
-[X] (2018-07-09) : Composer integration
-	Add a `composer.json` file and reorganize as necessary to work with Composer
-	and Packagist.
+[] (2018-09-24) : Composer's 'wrap-class'
+	Is anyone using this 'wrap-class'? Should it be a class `const` instead of a
+	`define`?
 
 [] (2018-07-05) : Common user, cookie objects
 	Started a common implementation of `dsAccount` and `dsCookie`, but removed it
@@ -28,3 +24,11 @@ project : wCommon ToDo
 
 [] (2016-10-02) : HTML5
 	Update the template to use HTML5
+
+[X] (2018-07-10) : Mail dependency
+	Add pear/mail to our composer requires. Also added pear/net_smtp and
+	pear/auth_sasl as recommended by pear/mail.
+
+[X] (2018-07-09) : Composer integration
+	Add a `composer.json` file and reorganize as necessary to work with Composer
+	and Packagist.
