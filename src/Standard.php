@@ -135,9 +135,16 @@ define('HOST', 'host');
 define('FRAGMENT', 'fragment');
 function composeURL($components=[]) {
 	$path = $components[PATH] or $path = getURLPath();
-	$query = array_merge((array)$components[QUERY], filterRequest((array)$components[KEYS]));
+	$query = array_filter(array_merge(
+		(array)$components[QUERY],
+		filterRequest((array)$components[KEYS])
+	));
 	$query_str = http_build_query($query, null, '&', PHP_QUERY_RFC3986);
-	return suffixIfCe($components[SCHEME], '://') . $components[HOST] . $path . prefixIfCe($query_str, '?') . prefixIfCe($components[FRAGMENT], '#');
+	return suffixIfCe($components[SCHEME], '://')
+		. $components[HOST]
+		. $path
+		. prefixIfCe($query_str, '?')
+		. prefixIfCe($components[FRAGMENT], '#');
 }
 
 //

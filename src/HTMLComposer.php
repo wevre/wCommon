@@ -191,4 +191,22 @@ class HTMLComposer {
 		$this->endElement();
 	}
 
+	//
+	// !Storing and reusing chunks of HTML.
+	//
+
+	private $library = [];
+
+	function storeHTML($key) {
+		$this->library[$key] = $this->getHTML();
+	}
+
+	function retrieveHTML($key) {
+		return $this->library[$key];
+	}
+
+	function composeStoredHTML($key) {
+		$this->addCustom($this->retrieveHTML($key));
+	}
+
 }
