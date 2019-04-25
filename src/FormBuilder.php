@@ -15,7 +15,13 @@ namespace wCommon;
 */
 
 /** Function to display different line endings. Used by debug logic in the checksum methods. */
-function showLineEndings($string) { errorLog(str_replace(array("\r\n", "\n\r", "\r", ), array("CRLF\n", "LFCR\n", "CR\n", ), $string)); }
+function showLineEndings($string) {
+	errorLog(str_replace(
+		[ "\r\n", "\n\r", "\r", ],
+		[ "CRLF\n", "LFCR\n", "CR\n", ],
+		$string
+	));
+}
 
 /** Converts all line endings to UNIX format and reduces to no more than two in succession. */
 function normalizedLineEndings($s) {
@@ -198,17 +204,25 @@ class FormBuilder {
 	* @param string $value the value to examine
 	*/
 	static function testChecksum($name) {
+		$key_pst = $name . self::HASH_SUFFIX;
+		$key_nrm = $name . self::NORMALIZED_SUFFIX;
+		// Generate the normalized version and stash it in $_POST.
 		$normalized = normalizedLineEndings(trim($_POST[$name]));
-		$_POST[$name . self::NORMALIZED_SUFFIX] = $normalized;
-		$val = ($_POST[$name . self::HASH_SUFFIX] == substr(sha1($normalized), self::HASH_LEN));
-		errorLog('for name ' . $name . ' checksum matches? ' . ( $val ? 'YES' : 'NO' ));
+		$_POST[$key_nrm] = $normalized;
+		// Test if normalized hash matches original hash.
+		$val = ($_POST[$key_pst] == substr(sha1($normalized), self::HASH_LEN));
+		errorLog(implode('', [
+			"for name `{$name}` checksum matches? ",
+			( $val ? 'YES' : 'NO' ),
+		]));
 		return $val;
 	}
 
 	/** While testing the checksum, the form builder normalizes line endings and caches those in $_POST. This function retrieves that normalized version (or creates it lazily if it was never created by a call to `testChecksum`. */
 	static function getNormalized($name) {
-		if (array_key_exists($name . self::NORMALIZED_SUFFIX, $_POST)) {
-			return $_POST[$name . self::NORMALIZED_SUFFIX];
+		$key_nrm = $name . self::NORMALIZED_SUFFIX;
+		if (array_key_exists($key_nrm, $_POST)) {
+			return $_POST[$key_nrm];
 		} else {
 			return normalizedLineEndings(trim($_POST[$name]));
 		}
@@ -614,7 +628,14 @@ class FormBuilder {
 			if (!$types) { $types = static::$TYPES_FILES; }
 			// Check for errors.
 			if (!$_FILES[$name]) { break; }
-			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) { errorLog('didUpload: file at ' . $_FILES[$name]['tmp_name'] . ' is not an uploaded file'); break; }
+			if (!is_uploaded_file($_FILES[$name]['tmp_name'])) {
+				errorLog(implode('', [
+					'didUpload: ',
+					"file at {$_FILES[$name]['tmp_name']} ",
+					'is not an uploaded file',
+				]));
+				break;
+			}
 			if ($types && !in_array($_FILES[$name]['type'], $types)) { static::setSessionError($name, 'Invalid file type'); break; }
 			return $_FILES[$name]['tmp_name'];
 		} while (0);
