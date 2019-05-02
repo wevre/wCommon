@@ -211,10 +211,6 @@ class FormBuilder {
 		$_POST[$key_nrm] = $normalized;
 		// Test if normalized hash matches original hash.
 		$val = ($_POST[$key_pst] == substr(sha1($normalized), self::HASH_LEN));
-		errorLog(implode('', [
-			"for name `{$name}` checksum matches? ",
-			( $val ? 'YES' : 'NO' ),
-		]));
 		return $val;
 	}
 
