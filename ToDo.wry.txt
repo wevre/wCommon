@@ -25,10 +25,14 @@ project : wCommon ToDo
 [] (2016-10-02) : HTML5
 	Update the template to use HTML5
 
-[X] (2018-07-10) : Mail dependency
+[✓] (2019-05-16) : Time and date display
+	Function to display midnight and noon is wrong because it is not using 24
+	hour clock 'H'. Copy correct formula from BYT and role out to clients.
+
+[✓] (2018-07-10) : Mail dependency
 	Add pear/mail to our composer requires. Also added pear/net_smtp and
 	pear/auth_sasl as recommended by pear/mail.
 
-[X] (2018-07-09) : Composer integration
+[✓] (2018-07-09) : Composer integration
 	Add a `composer.json` file and reorganize as necessary to work with Composer
 	and Packagist.

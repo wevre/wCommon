@@ -200,45 +200,61 @@ function suffixIfCe($item, $suff=' ') { return $item . ( $item ? $suff : '' ); }
 //
 
 /**
-* Returns the date formatted into the phrase: "at 7:54 PM on Monday 3 April 1996".
-* @param int $timestamp integer timestamp such as that returned by strtotime(), if null it is set to time()
-* @param bool $preps flag indicating whether or not to include prepositions around the time portion
-* @uses getTimeDisplay(), getDateDisplay() to format the time and date portions, respectively
+* Returns date/time formatted as "7:45 PM Mon 3 Apr 1996" with the AM/PM styled
+* in small caps (reyling on an `.apmp` class defined in CSS).
+* @param int $timestamp integer timestamp such as that returned by
+* `strtotime()`, if null it is set to `time()`.
+* @uses `getTimeDisplay()` and `getDateDisplay()` to compose result.
 */
 function getTimeDateDisplay($timestamp=null) {
-	if (is_null($timestamp)) { $timestamp = time(); }
 	return getTimeDisplay($timestamp) . ' ' . getDateDisplay($timestamp);
 }
 
 /**
-* Returns the time formatted with am/pm in small caps.
-* Won't include the minutes if they are zero. So 7:00 prints as 7, but 6:52 will print with the minutes.
-* Uses a span element and the class "ampm" to format the meridiem. Projects using this should have a class defined in CSS:
-* <code>
-* .ampm { font-variant: small-caps; }
-* </code>
+* Returns time with am/pm in small caps. Won't include minutes if they are zero.
+* So "7:00" prints as "7", but "6:52" will print with minutes. Uses a span
+* element and class "ampm" to format meridian. Projects using this should have a
+* class defined in CSS: ".ampm { font-variant: small-caps; }". Times of "00:00"
+* and "12:00" will be repsented as "midnight" and "noon", respectively.
+* @param int $timestamp timestamp value such as that returned by `strtotime()`,
+* if null it is set to `time()`.
+* @param string $sep separator between time and meridian, defaults to '&nbsp'.
 */
 function getTimeDisplay($timestamp=null, $sep='&nbsp;') {
 	if (is_null($timestamp)) { $timestamp = time(); }
+	$test24h = date('H:i', $timestamp);
+	if ($test24h == '12:00') { return 'noon'; }
+	else if ($test24h == '00:00') { return 'midnight'; }
 	$test = date('g:i', $timestamp);
-	if ($test == '12:00') { return 'noon'; }
-	else if ($test == '00:00') { return 'midnight'; }
-	return ( '00' == substr($test, -2) ? substr($test, 0, -3) : $test ) . $sep . '<span class="ampm">' . date('a', $timestamp) . '</span>';
+	return implode('', [
+		( '00' == substr($test, -2) ?  substr($test, 0, -3) : $test ),
+		$sep,
+		'<span class="ampm">',
+		date('a', $timestamp),
+		'</span>',
+	]);
 }
 
 /**
-* Returns the date formatted as: "Mon 3 Jun 1997".
-* The format string is "D j M Y".
-* @param int $timestamp integer timestamp such as that returned by strtotime(), if null it is set to time()
+* Returns the date formatted as: "Mon 3 Jun 1997". The format string is "D j M
+* Y". If time is "00:00" (midnight), which the computer considers the beginning
+* of a day, we instead return the day before, considering it the _end_ of the
+* previous day.
+* @param int $timestamp integer timestamp such as that returned by strtotime(),
+* if null it is set to time()
 */
 function getDateDisplay($timestamp=null) {
 	if (is_null($timestamp)) { $timestamp = time(); }
+	if (date('H:i', $timestamp) == '00:00') {
+		$timestamp = strtotime('-1 day', $timestamp);
+	}
 	return date('D j M Y', $timestamp);
 }
 
 /**
 * Returns a date in standard database format: 2016-03-16 14:03:23.
-* @param int $timestamp integer timestamp such as that returned by strtotime(), defaults to `null` which will be replaced with the current time()
+* @param int $timestamp integer timestamp such as that returned by strtotime(),
+* defaults to `null` which will be replaced with the current time()
 * @param string $fmt date format string to use, defaults to 'Y-m-d H:i:s'
 */
 function dbDate($timestamp=null, $fmt='Y-m-d H:i:s') {
@@ -247,10 +263,12 @@ function dbDate($timestamp=null, $fmt='Y-m-d H:i:s') {
 }
 
 /**
-* Returns a string explaining the time between the $timestamp and now.
-* The gap is described in units (years, months, weeks, days, etc.) that are the best match for the size of the gap.
-* Simplicity is preferred over precision. So, for instance, a $timestamp from 7 years, 3 months and 2 days ago will return "7 years ago".
-* Smaller quantities are preferred, so it won't return "25 days", but instead will return "3 weeks"; and "12 weeks" will turn into "3 months".
+* Returns a string explaining the time between the $timestamp and now. The gap
+* is described in units (years, months, weeks, days, etc.) that are the best
+* match for the size of the gap. Simplicity is preferred over precision. So, for
+* instance, a $timestamp from 7 years, 3 months and 2 days ago will return "7
+* years ago". Smaller quantities are preferred, so it won't return "25 days",
+* but instead will return "3 weeks"; and "12 weeks" will turn into "3 months".
 * @param int $timestamp integer timestamp such as that returned by strtotime()
 * @todo Should include a second parameter that can override 'now'.
 */
@@ -261,23 +279,42 @@ function getTimeIntervalDisplay($timestamp) {
 	$seconds = abs($timestamp-$now->getTimestamp());
 	$string = '';
 	if ($interval->y > 1) { $string = sprintf('%d years', $interval->y); }
-	else if (($months = $interval->m+12*$interval->y) > 2) { $string = sprintf('%d months', $months); }
-	else if ($interval->days > 13) { $string = sprintf('%d weeks', $interval->days/7); }
-	else if ($interval->days > 1) { $string = sprintf('%d days', $interval->days); }
-	else if ($seconds >= 7200) { $string = sprintf('%d hours', (int)($seconds/3600)); }
-	else if ($seconds >= 120) { $string = sprintf('%d minutes', (int)($seconds/60));}
+	else if (($months = $interval->m+12*$interval->y) > 2) {
+		$string = sprintf('%d months', $months);
+	}
+	else if ($interval->days > 13) {
+		$string = sprintf('%d weeks', $interval->days/7);
+	}
+	else if ($interval->days > 1) {
+		$string = sprintf('%d days', $interval->days);
+	}
+	else if ($seconds >= 7200) {
+		$string = sprintf('%d hours', (int)($seconds/3600));
+	}
+	else if ($seconds >= 120) {
+		$string = sprintf('%d minutes', (int)($seconds/60));
+	}
 	else if ($seconds > 1) { $string = sprintf('%d seconds', $seconds); }
 	else { return 'now'; }
 	return ( $interval->invert ? $string . ' ago' : 'in ' . $string );
 }
 
 /**
-* Returns a string with the time date display and the interval: "7:23 Monday 5 December 2006 (4 years ago)".
+* Returns a string with the time date display and the interval: "7:23 Monday 5
+* December 2006 (4 years ago)".
 * @param string $datestring string representation of a date
 * @uses getTimeDateDisplay(), getTimeIntervalDisplay()
-* @todo Should include a default parameter to control inclusion of prepositions. Currently they are forced off.
 */
-function getDateAndIntervalDisplay($datestring) { if (!$datestring) { return ''; } return getTimeDateDisplay($stamp = strtotime($datestring), false) . ' (' . getTimeIntervalDisplay($stamp) . ')'; }
+function getDateAndIntervalDisplay($datestring) {
+	if (!$datestring) { return ''; }
+	$stamp = strtotime($datestring);
+	return implode('', [
+		getTimeDateDisplay($stamp, false),
+		' (',
+		getTimeIntervalDisplay($stamp),
+		')',
+	]);
+}
 
 //
 // !Custom HTML element processing
