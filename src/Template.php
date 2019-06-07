@@ -1,149 +1,218 @@
 <?php
 namespace wCommon;
-/**
-* Subclasses that expands TemplateSigma.
-*
-* @copyright 2014-2015 Mike Weaver
-*
-* @license http://www.opensource.org/licenses/mit-license.html
-*
-* @author Mike Weaver
-* @created 2014-03-04
-*
-* @version 1.0.1
-*
+/*
+project : wCommon
+	author : Mike Weaver
+	created : 2014-03-04
+	revised : 2019-06-06
+		* Added class `const`'s.
+		* Tweaked how messages are displayed and faded.
+
+section : Introduction
+
+	Subclass TemplateSigma with methods for adding head elements and displaying
+	error/confirmation messages.
 */
 
-define('g_PAGE_TITLE', 'g_PAGE_TITLE');
+/*
+section : Template class
+*/
 
-function setPageTitle($title) { $GLOBALS[g_PAGE_TITLE] = $title; }
-
-/**
-* A subclass of TemplateSigma that includes more convenience methods for common
-* page elements. See the file `template.tmpl` for a sample template that works
-* with these methods. */
 class Template extends TemplateSigma {
 
-	const SKEY_ERROR = 'tmpl-error';
-	const SKEY_CONFIRM = 'tmpl-confirm';
+	private const SK_ERROR = 'tmpl-error';
+	private const SK_CONFIRM = 'tmpl-confirm';
 
-	const CLASS_CP = '\wCommon\HTMLComposer';
+	// Locations.
+	const TMPL_FILE = 'Provide default template filename';
+	const TMPL_CACHE_DIR = 'Provide cache directory';
+	const TMPL_DIR = 'Provide template directory';
 
-	public $cp; // A composer object for use by the template.
+	// Subclasses can override to provide their preferred Composer.
+	const CLS_COMPOSER = '\wCommon\HTMLComposer';
 
-	/** Initializes the template and checks for any error or confirmation messages to be displayed. */
-	function __construct($tfile, $tdir, $cdir=null) {
+	// Blocks, variables, and classes used in sample template.
+	const BLK_BODY_ATTR = 'BLK-BODY-ATTR';
+	const BLK_HEAD_ELEM = 'BLK-HEAD-ELEM';
+	const BLK_MAIN_ITEM = 'BLK-MAIN-ITEM';
+	const BLK_MSG = 'BLK-MSG';
+	const VAR_HEAD_TITLE = 'HEAD-TITLE';
+	const VAR_HEAD_ELEM = 'HEAD-ELEM';
+	const VAR_BODY_ATTR = 'BODY-ATTR';
+	const VAR_MAIN_ITEM = 'MAIN-ITEM';
+	const VAR_MSG = 'MSG';
+	const VAR_MSG_ID = 'MSG-ID';
+	const CLS_MSG_X = 'msgx';
+	const CLS_ERROR = 'error';
+
+	public $cp;
+
+	function __construct($title, $tfile=null, $tdir=null, $cdir=null) {
+		if (!$tfile) { $tfile = static::TMPL_FILE; }
+		if (!$tdir) { $tdir = static::TMPL_CACHE_DIR; }
+		if (!$cdir) { $cdir = static::TMPL_CACHE_DIR; }
 		parent::__construct($tfile, $tdir, $cdir);
-		$cpClass = static::CLASS_CP;
+		// Initialize our composer.
+		$cpClass = static::CLS_COMPOSER;
 		$this->cp = new $cpClass();
-		$page_title = $this->getPageTitle();
-		$this->setBlockVariables(null, [ 'HEAD-TITLE'=>$page_title, ]);
-		if ($_SESSION[self::SKEY_ERROR]) { foreach ($_SESSION[self::SKEY_ERROR] as $msg) { $this->displayMessage($msg, 'error'); } unset($_SESSION[self::SKEY_ERROR]); }
-		if ($_SESSION[self::SKEY_CONFIRM]) { foreach ($_SESSION[self::SKEY_CONFIRM] as $msg) { $this->displayMessage($msg); } unset($_SESSION[self::SKEY_CONFIRM]); }
+		// Set page title.
+		$this->setPageTitle($title);
+		// Render any error/confirmation messages.
+		$this->renderMessages();
 	}
 
-	function show($block = '__global__') {
-		if ($this->onloads) { $this->parseBlock('BLK-ONLOADS', [ 'ONLOAD'=>implode(' ', $this->onloads), ]); }
+	function show($block='__global__') {
+		// Add onloads.
+		$this->renderOnloads();
+		// Add message fader.
+		$this->renderMsgCloseScript();
+		// Show.
 		parent::show($block);
 	}
 
-	function getPageTitle() {
-		return $GLOBALS[g_PAGE_TITLE];
+	function setPageTitle($title) {
+		$this->setBlockVariables([ static::VAR_HEAD_TITLE=>$title, ]);
 	}
 
-	//
-	// !Standard template parts
-	//
+	/*
+	section : Header parts
+	*/
 
-	/** Adds a style sheet link. */
+	protected function parseHeadElem() {
+		$this->parseBlock(
+			static::BLK_HEAD_ELEM,
+			[ static::VAR_HEAD_ELEM=>$this->cp->getHTML(), ]
+		);
+	}
+
 	function addStyleSheet($sheet) {
 		$this->cp->addElement('link', [ 'rel'=>'stylesheet', 'href'=>$sheet, ]);
-		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+		$this->parseHeadElem();
 	}
 
-	/** Adds a string for an inline style sheet. */
 	function addInlineStyle($text) {
 		$this->cp->addElement('style', [], $text);
-		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+		$this->parseHeadElem();
 	}
 
-	/** Adds a script file link. */
 	function addScriptFile($file) {
 		$this->cp->addElement('script', [ 'src'=>$file, ]);
-		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+		$this->parseHeadElem();
 	}
 
-	/** Adds a string as an inline script. */
+
 	function addInlineScript($text) {
 		$this->cp->addElement('script', [], $text);
-		$this->parseBlock('BLK-HEAD-ELEM', [ 'HEAD_TAG'=>$this->cp->getHTML(), ]);
+		$this->parseHeadElem();
 	}
 
-	/** Adds a snippet of javascript to the BODY element's onload="" attribute. Note that the onload attribute is surrounded by double quotes, so the javascript should only include single quotes. */
+	/*
+	section : Onloads
+	*/
+
+	// Add onload to cache, it will render when we show template.
 	function addOnload($string) {
-		$this->onloads[] = $string;
+		// Onloads are declared inside double quotes, escape any internal ones.
+		$this->cache_onloads[] = addcslashes($string, '"');
 	}
 
-	/** Adds an item to the BLK-MAIN-ITEM portion. See the sample template. */
+	protected function renderOnloads() {
+		if (!$this->cache_onloads) { return; }
+		$str_onload = implode([
+			'onload="',
+			implode(' ', $this->cache_onloads),
+			'"',
+		]);
+		$this->parseBlock(
+			static::BLK_BODY_ATTR,
+			[ static::VAR_BODY_ATTR=>$str_onload, ]
+		);
+	}
+
+	/*
+	section : Main items
+	*/
+
 	function addItem($item) {
-		$this->parseBlock('BLK-MAIN-ITEMS', array('MAIN-ITEM'=>$item, ));
+		$this->parseBlock(
+			static::BLK_MAIN_ITEM,
+			[ static::VAR_MAIN_ITEM=>$item, ]
+		);
 	}
 
-	/** Adds an item based on whatever has been composed in the internal $cp Composer. */
-	function addComposerItem() {
-		$this->addItem($this->cp->getHTML());
-	}
+	/*
+	section : Error and confirm messages
 
-	//
-	// !Error and confirm messages
-	//
+		Messages are added to queues in $_SESSION and will be rendered on next
+		page display.
+	*/
 
-		/**
-		* Displays a message. On the first message only, adds an inline script to fade out the message after a delay.
-		* @param string $msg The message to display
-		* @param string $class An additional class to place on the message (i.e., 'error').
-		* @param string $close Text to represent "close this message". Defaults to "X".
-		* See the sample template for the DIV's and classes that make messages work.
-		*/
-	function displayMessage($msg, $class='', $close='X') {
-		$this->parseBlock('BLK-MSG', array('MSG'=>$msg, 'MSG-XCLASS'=>$class, 'MSG-X'=>$close));
-		if ($this->addedFader) { return; }
-		$this->addInlineScript(<<<EOT
-function msgClose(item) {
-	while (item && item.parentNode) {
-		if (item.nodeName == 'DIV' && item.className == 'mborder') {
-			var next = item.nextSibling;
-			if (next) {
-				next.style.marginTop = (next.offsetTop - item.offsetTop) + 'px';
-				setTimeout(function() { next.style.transition = 'margin-top 1s'; next.style.marginTop = 0; }, 20);
-			}
-			item.style.display = 'none';
-			break;
+	protected static function queueMessage($queue, $msg, $onlyIfEmpty=false) {
+		if (!$onlyIfEmpty || 0==count((array)$_SESSION[$queue])) {
+			$_SESSION[$queue][] = $msg;
 		}
-		item = item.parentNode;
 	}
+
+	static function addErrorMessage($msg, $onlyIfEmpty=false) {
+		self::queueMessage(self::SK_ERROR, $msg, $onlyIfEmpty);
+	}
+
+	static function addConfirmMessage($msg, $onlyIfEmpty=false) {
+		self::queueMessage(self::SK_CONFIRM, $msg, $onlyIfEmpty);
+	}
+
+	protected function renderMessages() {
+		foreach ((array)$_SESSION[self::SK_ERROR] as $msg) {
+			$this->composeMessage($msg, static::CLS_ERROR);
+		}
+		unset($_SESSION[self::SK_ERROR]);
+		foreach ((array)$_SESSION[self::SK_CONFIRM] as $msg) {
+			$this->composeMessage($msg);
+		}
+		unset($_SESSION[self::SK_CONFIRM]);
+	}
+
+	// Wrap message in a DIV with an automatically generated id. Append to `$msg`
+	// a <P> element containing `$close` (text, image, SVG) and 'onclick' call to
+	// `msgClose` that fades out wrapping DIV#id.
+	protected function composeMessage($msg, $class='', $close='X') {
+		$this->ctr_msg_id += 1;
+		$this->cp->addCustom($msg);
+		$this->cp->beginElement('p', [
+			'class'=>static::CLS_MSG_X,
+			'onclick'=>"msgClose('{$this->ctr_msg_id}')",
+		], $close);
+		$this->parseBlock(
+			static::BLK_MSG,
+			[
+				static::VAR_MSG_ID=>$this->ctr_msg_id,
+				static::VAR_MSG=>$this->cp->getHTML(),
+			]
+		);
+		$this->flg_needs_fader = true;
+	}
+
+	protected function renderMsgCloseScript() {
+		if (!$this->flg_needs_fader) { return; }
+		$this->addInlineScript(<<<EOT
+function msgClose(id) {
+	var item = document.getElementById(id);
+	if (!item) { return; }
+	var next = item.nextSibling;
+	if (next) {
+		next.style.marginTop = (next.offsetTop - item.offsetTop) + 'px';
+		setTimeout(
+			function() {
+				next.style.transition = 'margin-top 1s';
+				next.style.marginTop = 0;
+			},
+			20
+		);
+	}
+	item.style.display = 'none';
 }
 EOT
 		);
-		$this->addedFader = true;
-	}
-
-	/** Clears error messages from the session-stored list. */
-	static function resetErrorMessages() { unset($_SESSION[self::SKEY_ERROR]); }
-
-	/** Clears confirmation messages from the session-stored list. */
-	static function resetConfirmMessage() { unset($_SESSION[self::SKEY_CONFIRM]); }
-
-	/** Adds an error message to the session-stored list. They will be displayed on the next page load. The $onlyIfEmpty parameter, if true, will prevent a message from being added if one already exists. */
-	static function addErrorMessage($msg, $onlyIfEmpty=false) {
-		if ($onlyIfEmpty && count((array)$_SESSION[self::SKEY_ERROR])>0) { return; }
-		$_SESSION[self::SKEY_ERROR][] = $msg;
-	}
-
-	/** Adds a confirmation message to the session-stored list. They will be displayed on the next page load. The $onlyIfEmpty parameter, if true, will prevent a message from being added if one already exists. */
-	static function addConfirmMessage($msg, $onlyIfEmpty=false) {
-		if ($onlyIfEmpty && count($_SESSION[self::SKEY_CONFIRM])>0) { return; }
-		$_SESSION[self::SKEY_CONFIRM][] = $msg;
 	}
 
 }

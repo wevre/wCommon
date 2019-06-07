@@ -2,27 +2,73 @@ project : wCommon ToDo
 	author : Mike Weaver
 	created : 2015-02-13
 
-[] (2018-09-24) : Composer's 'wrap-class'
-	Is anyone using this 'wrap-class'? Should it be a class `const` instead of a
-	`define`?
-
-[] (2018-07-05) : Common user, cookie objects
-	Started a common implementation of `dsAccount` and `dsCookie`, but removed it
-	in lieu of `LoginHelper`. However, a common `dsCookie` (and maybe also
-	`dsUser`) might be handy, if can figure out a way to integrate it cleanly in
-	all the different users of wCommon.
-
-[] (2018-03-03) : Bespoke template
-	Create a template, based on HTMLComposer, and remove dependency on
-	`HTML_Template_Sigma`, which isn't going anywhere soon, but has been out of
-	active development for a few years now. Template needs are so simple that a
-	not-too-complicated class could produce it on demand.
+[] (2019-06-07) : Calls to standard functions
+	What happens when we call functions like `prefixIfCe` or `arrayKeyMap` or
+	`getHost` in a client like DAC or BYT. If those have been overridden in their
+	namespace, which version is used?
 
 [] (2017-09-30) : Clean up comments
 	Review comments and make them complete sentences with initial capital and
 	trailing period. Limit use of "the" and "a[n]".
+		[X] HTMLComposer
+		[] FormBuilder
+		[X] Standard
 
-[] (2016-10-02) : HTML5
+[X] (2019-06-07) : LH host
+	LoginHelper needs to be initialized with a `host`.
+
+[X] (2019-06-07) : Set block variables
+	Changed the order around in `setBlockVariables` so we don't have to always
+	pass `null` as the first parameter. Also added `$title` as a first parameter
+	to Template's constructor.
+
+[X] (2019-06-07) : Server helper
+	Move the `g_SITECODE` type define into a class as const's and include
+	server-related functions such as confirmServer, isStageRegion, getHost,
+	basically anything that is using those constants.
+
+[X] (2019-06-07) : URL composer
+	Create a class URLComposer that we can initialize with path, query, keys,
+	scheme, etc. and then get a URL out the other end. It will probably always be
+	a one-and-done, but it will make our logic clearer what is going on. We can
+	add query parameters from existing REQUEST or from an array or one at a time
+	with different function calls.
+
+[X] (2019-06-07) : dcode scanner
+	Make dCode into a class.
+
+[X] (2019-06-07) : Page title
+	Get this out of $GLOBAL and just let it live on the template class as a
+	member.
+
+[X] (2019-06-06) : BYT specific
+	Functions `composeActionLinks` and `composePropertyList` are only used by
+	BYT. Seem pretty specific to be here. Similarly, `warn` and `areYouSure`
+	could easily be specialized by subclasses in BYT and DAC.
+
+[X] (2018-09-24) : Composer's 'wrap-class'
+	Is anyone using this 'wrap-class'? Should it be a class `const` instead of a
+	`define`? Yes, and yes. And it should probably move to BYT's subclass.
+
+[X] (2019-06-07) : Login success
+	Function `onSuccessfulLogin` needs to move from BYT and DAC into the
+	LoginHelper. This will allow some methods to become protected. Same thing
+	with logout.
+
+[X] (2019-06-06) : Login helper
+	The LoginHelper class is wonderful. Let's fix up comments.
+	Same with Template.
+
+[X] (2019-06-06) : Template block names
+	Get rid of plurals in template block names: BLK-ONLOAD, BLK-MAIN-ITEM. Can
+	maybe make them class constants so they can be overridden, if necessary, by
+	subclasses.
+
+[X] (2019-06-06) : URL in error log
+	Always add getURLPath to the ident in function `errorLog` and then remove
+	that logic from BYT and DAC19.
+
+[X] (2016-10-02) : HTML5
 	Update the template to use HTML5
 
 [✓] (2019-05-16) : Time and date display

@@ -41,8 +41,8 @@ class FormBuilder {
 	public static $fDebug = false;
 
 	// Constants for storing form errors and values in $_SESSION.
-	const SKEY_ERRORS = 'form-errors';
-	const SKEY_VALUES = 'form-values';
+	const SK_ERRORS = 'form-errors';
+	const SK_VALUES = 'form-values';
 
 	const KEY_ACTION = 'a';
 
@@ -68,7 +68,7 @@ class FormBuilder {
 	const NORMALIZED_SUFFIX = '-normalized';
 
 	/** An instance of HTMLComposer for generating HTML. A new composer will be created when a new class instance is created, but users can replace it with their own if desired. */
-	public $cp;
+	public $cp; //TODO create a const for the CLS_CP and use that to initialize
 
 	/**
 	* Creates a new FormBuilder.
@@ -94,14 +94,14 @@ class FormBuilder {
 	* @param string $name a name of a form element with which the error will be associated
 	* @param string $msg the error message
 	*/
-	static function setSessionError($name, $msg) { $_SESSION[self::SKEY_ERRORS][$name] = $msg; }
+	static function setSessionError($name, $msg) { $_SESSION[self::SK_ERRORS][$name] = $msg; }
 
 	/**
 	* Returns an error message, if it exists, associated with a form name.
 	* The message is wrapped in a SPAN element with class 'error' and prepended with an m-dash,
 	* because it is intended to be attached to the label for the form element.
 	*/
-	static function getSessionError($name) { return wrapIfCe($_SESSION[self::SKEY_ERRORS][$name], '<span class="error"> &#8212; ', '</span>'); }
+	static function getSessionError($name) { return wrapIfCe($_SESSION[self::SK_ERRORS][$name], '<span class="error"> &#8212; ', '</span>'); }
 
 	/**
 	* Sets the value in $_SESSION for the name of a form element.
@@ -111,16 +111,16 @@ class FormBuilder {
 	* @param string $value the value to associate with the named form element
 	* @see grabSessionValues()
 	*/
-	static function setSessionValue($name, $value) { $_SESSION[self::SKEY_VALUES][$name] = $value; }
+	static function setSessionValue($name, $value) { $_SESSION[self::SK_VALUES][$name] = $value; }
 
 	/** Clears the value in $_SESSION for the supplied $name. */
-	static function clearSessionValue($name) { unset($_SESSION[self::SKEY_VALUES][$name]); }
+	static function clearSessionValue($name) { unset($_SESSION[self::SK_VALUES][$name]); }
 
 	/** Returns the value associated with a named form element, as it is stored in $_SESSION. */
-	static function sessionValue($name) { return $_SESSION[self::SKEY_VALUES][$name]; }
+	static function sessionValue($name) { return $_SESSION[self::SK_VALUES][$name]; }
 
 	/** Grabs the values in $_POST and saves them in $_SESSION. */
-	static function grabSessionValues() { $_SESSION[self::SKEY_VALUES] = $_POST; }
+	static function grabSessionValues() { $_SESSION[self::SK_VALUES] = $_POST; }
 
 	//
 	// !Checking $_POST values
@@ -298,6 +298,7 @@ class FormBuilder {
 	* @param array $keys a list of keys that exist in $_REQUEST
 	* @uses addHiddenField()
 	*/
+	//TODO: can we get away without needing function `filterRequest` here?
 	function addHiddenKeys($keys=[]) {
 		arrayKeyMap([ $this, 'addHiddenField' ], filterRequest($keys));
 	}
@@ -585,7 +586,7 @@ class FormBuilder {
 		$this->cp->beginElement('p', array('class'=>static::CLASS_INPUT));
 		if (!$items['value']) { $items['value'] = 'true'; }
 		if (self::sessionValue($name)) { $items['selected'] = in_array($items['value'], (array)self::sessionValue($name)); }
-		else if ($_SESSION[self::SKEY_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
+		else if ($_SESSION[self::SK_VALUES]) { $items['selected'] = false; } // The notion of 'unchecked' can't be sticky, because for an unchecked box the name/value pair won't be saved in the session at all. Thus if session values exist but don't include the value for this checkbox, we interpret that as a sticky 'unchecked'.
 		$items['type'] = 'checkbox';
 		$items['name'] = $name;
 		if ($name) { $items['id'] = $name . '-' . $items['value']; }
@@ -603,8 +604,8 @@ class FormBuilder {
 
 	/** Returns the HTML string that was created with prior calls to all the other functions in this class. */
 	function getForm() {
-		unset($_SESSION[self::SKEY_ERRORS]);
-		unset($_SESSION[self::SKEY_VALUES]);
+		unset($_SESSION[self::SK_ERRORS]);
+		unset($_SESSION[self::SK_VALUES]);
 		$this->cp->endElement(); //<FORM>
 		return $this->cp->getHTML();
 	}
@@ -636,7 +637,7 @@ class FormBuilder {
 			return $_FILES[$name]['tmp_name'];
 		} while (0);
 		// Set an error message, if non c’è.
-		if (!$_SESSION[static::SKEY_ERRORS][$name]) switch ($_FILES[$name]['error']) {
+		if (!$_SESSION[static::SK_ERRORS][$name]) switch ($_FILES[$name]['error']) {
 			case UPLOAD_ERR_INI_SIZE :
 			case UPLOAD_ERR_FORM_SIZE : static::setSessionError($name, 'File is too large. Please upload a smaller file.'); break;
 			case UPLOAD_ERR_PARTIAL : static::setSessionError($name, 'File was only partially uploaded'); break;
