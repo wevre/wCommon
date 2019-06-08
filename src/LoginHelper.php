@@ -150,7 +150,7 @@ class LoginHelper {
 	section : Login date and messages
 	*/
 
-	protected const CLS_TEMPLATE = '\wCommon\Template';
+	protected $CLS_TEMPLATE = '\wCommon\Template';
 
 	protected function triggerLastLoginMessage() {
 		// Create a message about the last time logged in.
@@ -158,7 +158,7 @@ class LoginHelper {
 		if (!$prior) { return; }
 		unset($_SESSION[self::SK_LAST_LOGIN_DATE]);
 		call_user_func(
-			[ static::CLS_TEMPLATE, 'addConfirmMessage' ],
+			[ $this->CLS_TEMPLATE, 'addConfirmMessage' ],
 			'You last logged in ' . getDateAndIntervalDisplay($prior) . '.'
 		);
 	}

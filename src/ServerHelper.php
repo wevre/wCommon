@@ -17,12 +17,14 @@ section : ServerHelper class
 
 class ServerHelper {
 
-	// Clients should sublcass and provide client-specific values.
-	public $SUBDOMAIN = 'Provide subdomain';
-	public $SITECODE = 'Provide sitecode for emails and hashes';
-	public $SITENAME = 'Provide site name';
-	public $HOSTNAME = 'Provide hostname';
-	public $POSTMASTER = 'Provide postmaster email';
+	// Sublcass and provide compile-time defaults. Set run-time values in
+	// constructor.
+	protected $SUBDOMAIN = ''; // constructing and validating URL's
+	protected $SITECODE = ''; // emails, hashes, and server paths
+	protected $SITENAME = ''; // page titles
+	protected $HOSTNAME = ''; // constructing and validating URL's
+	protected $FILEPATH = ''; // server paths
+	protected $POSTMASTER = ''; // sending emails
 
 	protected static $shared;
 
@@ -33,6 +35,13 @@ class ServerHelper {
 		}
 		return self::$shared;
 	}
+
+	function subdomain() { return $this->SUBDOMAIN; }
+	function sitecode() { return $this->SITECODE; }
+	function sitename() { return $this->SITENAME; }
+	function hostname() { return $this->HOSTNAME; }
+	function filepath() { return $this->FILEPATH; }
+	function postmaster() { return $this->POSTMASTER; }
 
 	// Redirect if not HTTPS or domain doesn't match.
 	function confirmServer() {

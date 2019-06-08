@@ -18,9 +18,9 @@ section : TemplateSigma class
 
 class TemplateSigma extends \HTML_Template_Sigma {
 
-	function __construct($tfile, $tdir, $cdir=null) {
-		parent::__construct($tdir, $cdir);
-		$res = $this->loadTemplateFile($tfile);
+	function __construct($file, $dir, $cache) {
+		parent::__construct($dir, $cache);
+		$res = $this->loadTemplateFile($file);
 		if (\SIGMA_OK !== $res) {
 			errorLog('error loading template file: ' . $res);
 		}

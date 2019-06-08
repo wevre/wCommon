@@ -17,6 +17,8 @@ section : TagReplacer class
 
 class TagReplacer {
 
+	protected $tag;
+
 	function __construct($tag) {
 		$this->tag = $tag;
 	}

@@ -23,10 +23,11 @@ class Template extends TemplateSigma {
 	private const SK_ERROR = 'tmpl-error';
 	private const SK_CONFIRM = 'tmpl-confirm';
 
-	// Locations.
-	const TMPL_FILE = 'Provide default template filename';
-	const TMPL_CACHE_DIR = 'Provide cache directory';
-	const TMPL_DIR = 'Provide template directory';
+	// Sublcass and provide compile-time defaults. Set run-time values in
+	// constructor.
+	protected $FILE = ''; // default template file
+	protected $DIR = ''; // template directory
+	protected $CACHE = ''; // template cache directory
 
 	// Subclasses can override to provide their preferred Composer.
 	const CLS_COMPOSER = '\wCommon\HTMLComposer';
@@ -47,11 +48,11 @@ class Template extends TemplateSigma {
 
 	public $cp;
 
-	function __construct($title, $tfile=null, $tdir=null, $cdir=null) {
-		if (!$tfile) { $tfile = static::TMPL_FILE; }
-		if (!$tdir) { $tdir = static::TMPL_DIR; }
-		if (!$cdir) { $cdir = static::TMPL_CACHE_DIR; }
-		parent::__construct($tfile, $tdir, $cdir);
+	function __construct($title, $file, $dir, $cache) {
+		if (!$file) { $file = $this->FILE; }
+		if (!$dir) { $dir = $this->DIR; }
+		if (!$cache) { $cache = $this->CACHE; }
+		parent::__construct($file, $dir, $cache);
 		// Initialize our composer.
 		$cpClass = static::CLS_COMPOSER;
 		$this->cp = new $cpClass();
