@@ -49,7 +49,7 @@ class Template extends TemplateSigma {
 
 	function __construct($title, $tfile=null, $tdir=null, $cdir=null) {
 		if (!$tfile) { $tfile = static::TMPL_FILE; }
-		if (!$tdir) { $tdir = static::TMPL_CACHE_DIR; }
+		if (!$tdir) { $tdir = static::TMPL_DIR; }
 		if (!$cdir) { $cdir = static::TMPL_CACHE_DIR; }
 		parent::__construct($tfile, $tdir, $cdir);
 		// Initialize our composer.

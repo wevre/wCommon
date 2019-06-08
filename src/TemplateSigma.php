@@ -20,7 +20,10 @@ class TemplateSigma extends \HTML_Template_Sigma {
 
 	function __construct($tfile, $tdir, $cdir=null) {
 		parent::__construct($tdir, $cdir);
-		$this->loadTemplateFile($tfile);
+		$res = $this->loadTemplateFile($tfile);
+		if (\SIGMA_OK !== $res) {
+			errorLog('error loading template file: ' . $res);
+		}
 	}
 
 	// Set current block and variables in single step; parses by default.
