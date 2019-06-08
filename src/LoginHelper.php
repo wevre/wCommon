@@ -65,7 +65,9 @@ class LoginHelper {
 
 	function userForToken($token) { throw new LHException(__FUNCTION__); }
 
-	function cookieForUser($user) { throw new LHException(__FUNCTION__); }
+	function cookieForUser($user, $expire) {
+		throw new LHException(__FUNCTION__);
+	}
 
 	function userForCookie($cookie) { throw new LHException(__FUNCTION__); }
 
@@ -179,9 +181,10 @@ class LoginHelper {
 	function stashUserInCookie($user) {
 		if (self::doNotTrack()) { return; }
 		if ($_COOKIE[self::COOKIE_IDEE]) { return; }
-		$cookie = $this->cookieForUser($user);
+		$weeks = self::COOKIE_WEEKS;
+		$expire = strtotime("+{$weeks} weeks");
+		$cookie = $this->cookieForUser($user, $expire);
 		if (!$cookie) { return; }
-		$expire = time() + 60*60*24*7*self::COOKIE_WEEKS;
 		setcookie(self::COOKIE_IDEE, $cookie, $expire, '/', $this->host, true);
 	}
 
@@ -201,7 +204,8 @@ class LoginHelper {
 			$user = $this->userForCookie($cookie);
 			if (!$user) { break; }
 			// Confirm within COOKIE_WEEKS since last login.
-			$cutoff = dbDate(strtotime(self::COOKIE_WEEKS . ' weeks ago'));
+			$weeks = self::COOKIE_WEEKS;
+			$cutoff = dbDate(strtotime("-{$weeks} weeks"));
 			$loginDate = $this->getUserLoginDate($user);
 			if (!$loginDate || $loginDate < $cutoff) { break; }
 			return $user;
