@@ -88,8 +88,8 @@ class HTMLComposer {
 		else if (!is_array($attribs)) { $attribs = []; }
 		$attribString = implode(
 			' ',
-			arrayKeyMap(
-				function ($k, $v) { return "{$key}=\"{$val}\""; },
+			array_key_map(
+				function ($k, $v) { return "{$k}=\"{$v}\""; },
 				array_filter($attribs)
 			)
 		);

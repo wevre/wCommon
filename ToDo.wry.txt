@@ -3,7 +3,7 @@ project : wCommon ToDo
 	created : 2015-02-13
 
 [] (2019-06-07) : Calls to standard functions
-	What happens when we call functions like `prefixIfCe` or `arrayKeyMap` or
+	What happens when we call functions like `prefixIfCe` or `array_key_map` or
 	`getHost` in a client like DAC or BYT. If those have been overridden in their
 	namespace, which version is used?
 
@@ -13,6 +13,21 @@ project : wCommon ToDo
 		[X] HTMLComposer
 		[] FormBuilder
 		[X] Standard
+
+[X] (2019-06-08) : Git follow tags
+	For this and dStruct, that are delivered as packages via Composer, I need to
+	maintain tags and upload them to the remote. That can be automated by setting
+	this global config:
+
+	```
+		git config --global push.followTags true
+
+	Then when I commit changes, add a tag and push.
+
+	```
+		git commit -m 'Some changes'
+		git tag v2.3.4 -m 'v2.3.4' # -m makes it an annotated tag
+		git push
 
 [X] (2019-06-07) : LH host
 	LoginHelper needs to be initialized with a `host`.

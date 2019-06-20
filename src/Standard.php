@@ -80,8 +80,13 @@ section : Array functions
 */
 
 // Map a function over key/val pairs of an array.
-function arrayKeyMap($function, $array) {
+function array_key_map($function, $array) {
 	return array_map($function, array_keys((array)$array), (array)$array);
+}
+
+// Keep values for specific keys only.
+function array_keep($arr, $keys) {
+	return array_intersect_key( $arr, array_flip($keys));
 }
 
 /*
