@@ -30,16 +30,16 @@ class LHException extends \Exception {
 
 class LoginHelper {
 
-	private const SK_LOCATION = 'url-target';
-	private const SK_USER = 'user-name';
-	private const SK_LAST_LOGIN_DATE = 'user-last-login-date';
-
 	const COOKIE_IDEE = 'signin';
 	const COOKIE_WEEKS = 2;
 
-	protected $host = '';
+	public static $loginError = null;
 
-	function __construct($host) {
+	protected $host = '';
+	protected $user = null;
+
+	function __construct($user, $host) {
+		$this->user = $user;
 		$this->host = $host;
 	}
 
@@ -47,31 +47,37 @@ class LoginHelper {
 	section : Subclasses to override
 	*/
 
-	function getCurrentUser() { throw new LHException(__FUNCTION__); }
+	function registerUser() { throw new LHException(__FUNCTION__); }
 
-	function setCurrentUser($user) { throw new LHException(__FUNCTION__); }
-
-	function isDisabledUser($user) { throw new LHException(__FUNCTION__); }
-
-	function hasPermissionUser($user) { throw new LHException(__FUNCTION__); }
-
-	function getUserLoginDate($user) { throw new LHException(__FUNCTION__); }
-
-	function setUserLoginDate($user, $date) {
+	static function unregisterUser() {
 		throw new LHException(__FUNCTION__);
 	}
 
-	function tokenForUser($user) { throw new LHException(__FUNCTION__); }
+	function isDisabledUser() { throw new LHException(__FUNCTION__); }
 
-	function userForToken($token) { throw new LHException(__FUNCTION__); }
+	function hasPermissionUser() { throw new LHException(__FUNCTION__); }
 
-	function cookieForUser($user, $expire) {
+	function getUserLoginDate() { throw new LHException(__FUNCTION__); }
+
+	function setUserLoginDate($date) {
 		throw new LHException(__FUNCTION__);
 	}
 
-	function userForCookie($cookie) { throw new LHException(__FUNCTION__); }
+	static function tokenForUser($user) { throw new LHException(__FUNCTION__); }
 
-	function deleteCookie($cookie) { throw new LHException(__FUNCTION__); }
+	static function userForToken($token) { throw new LHException(__FUNCTION__); }
+
+	static function cookieForUser($user, $expire) {
+		throw new LHException(__FUNCTION__);
+	}
+
+	static function userForCookie($cookie) {
+		throw new LHException(__FUNCTION__);
+	}
+
+	static function deleteCookie($cookie) {
+		throw new LHException(__FUNCTION__);
+	}
 
 	/*
 	section : Public methods
@@ -81,40 +87,45 @@ class LoginHelper {
 	// and for permissions, register current user, and return true. If any of
 	// that fails, unregister current user, clear session and cookie and return
 	// false.
-	function confirmUser() {
+	static function confirmUser() {
 		do {
-			$user = $this->userFromSession() or $user = $this->userFromCookie();
+			$user = static::userFromSession() or $user = static::userFromCookie();
 			if (!$user) { break; }
-			if ($this->isDisabledUser($user)) {
-				errorLog("{$user} is disabled");
+			$class = get_called_class();
+			$lh = new $class($user);
+			if ($lh->isDisabledUser()) {
+				static::$loginError = "LH01 :: {$user} is disabled";
 				break;
 			}
-			if (!$this->hasPermissionUser($user)) { break; }
-			$this->triggerLastLoginMessage();
-			$this->stashUserInSession($user);
-			$this->setCurrentUser($user);
+			if (!$lh->hasPermissionUser()) {
+				static::$loginError = "LH02 :: {$user} failed permissions";
+				break;
+			}
+			static::triggerLastLoginMessage();
+			$lh->stashUserInSession();
+			$lh->registerUser();
 			return true;
 		} while (0);
-		$this->stashLocation();
-		$this->clearUserSession();
-		$this->clearUserCookie();
-		$this->setCurrentUser(null);
+		static::stashLocation();
+		static::clearUserSession();
+		static::clearUserCookie();
+		static::unregisterUser();
 		return false;
 	}
 
 	// Stash user in session and cookie and set Location header.
-	function onSuccessfulLogin($user) {
-		$lh->setCurrentUser($user);
-		$lh->stashUserInSession($user);
-		$lh->stashUserInCookie($user);
-		$lh->resetLoginDate($user);
-		header('Location: ' . $this->popStashedLocation());
+	function onSuccessfulLogin() {
+		$this->registerUser();
+		$this->stashUserInSession();
+		$this->stashUserInCookie();
+		$this->resetLoginDate();
+		header('Location: ' . static::popStashedLocation());
 	}
 
 	// Clear user from session and cookie and set location header.
 	function logout($log='/login') {
-		$this->clearUserSession();
-		$this->clearUserCookie();
+		static::clearUserSession();
+		static::clearUserCookie();
 		header('Location: ' . $loc);
 	}
 
@@ -122,11 +133,13 @@ class LoginHelper {
 	section : Session methods
 	*/
 
-	protected function stashUserInSession($user) {
-		$_SESSION[self::SK_USER] = $this->tokenForUser($user);
+	private const SK_USER = 'user-name';
+
+	protected function stashUserInSession() {
+		$_SESSION[self::SK_USER] = static::tokenForUser($this->user);
 	}
 
-	protected function clearUserSession() {
+	protected static function clearUserSession() {
 		unset($_SESSION[self::SK_USER]);
 	}
 
@@ -135,7 +148,7 @@ class LoginHelper {
 			// Fetch the account from the session.
 			$token = $_SESSION[self::SK_USER];
 			if (!$token) { break; }
-			$user = $this->userForToken($token);
+			$user = static::userForToken($token);
 			if (!$user) {
 				errorLog("No user for {$token}.");
 				break;
@@ -152,22 +165,24 @@ class LoginHelper {
 	section : Login date and messages
 	*/
 
-	protected $CLS_TEMPLATE = '\wCommon\Template';
+	private const SK_LAST_LOGIN_DATE = 'user-last-login-date';
 
-	protected function triggerLastLoginMessage() {
+	protected const CLS_TEMPLATE = '\wCommon\Template';
+
+	protected static function triggerLastLoginMessage() {
 		// Create a message about the last time logged in.
 		$prior = $_SESSION[self::SK_LAST_LOGIN_DATE];
 		if (!$prior) { return; }
 		unset($_SESSION[self::SK_LAST_LOGIN_DATE]);
 		call_user_func(
-			[ $this->CLS_TEMPLATE, 'addConfirmMessage' ],
+			[ static::CLS_TEMPLATE, 'addConfirmMessage' ],
 			'You last logged in ' . getDateAndIntervalDisplay($prior) . '.'
 		);
 	}
 
-	protected function resetLoginDate($user) {
-		$_SESSION[self::SK_LAST_LOGIN_DATE] = $this->getUserLoginDate($user);
-		$this->setUserLoginDate($user, dbDate());
+	protected function resetLoginDate() {
+		$_SESSION[self::SK_LAST_LOGIN_DATE] = $this->getUserLoginDate();
+		$this->setUserLoginDate(dbDate());
 	}
 
 	/*
@@ -183,14 +198,14 @@ class LoginHelper {
 		if ($_COOKIE[self::COOKIE_IDEE]) { return; }
 		$weeks = self::COOKIE_WEEKS;
 		$expire = strtotime("+{$weeks} weeks");
-		$cookie = $this->cookieForUser($user, $expire);
+		$cookie = static::cookieForUser($user, $expire);
 		if (!$cookie) { return; }
 		setcookie(self::COOKIE_IDEE, $cookie, $expire, '/', $this->host, true);
 	}
 
 	protected function clearUserCookie() {
 		$cookie = $_COOKIE[self::COOKIE_IDEE];
-		if ($cookie) { $this->deleteCookie($cookie); }
+		if ($cookie) { static::deleteCookie($cookie); }
 		unset($_COOKIE[self::COOKIE_IDEE]);
 		setcookie(self::COOKIE_IDEE, '', time()-3600, '/', $this->host, true);
 	}
@@ -201,7 +216,7 @@ class LoginHelper {
 		do try {
 			$cookie = $_COOKIE[self::COOKIE_IDEE];
 			if (!$cookie) { break; }
-			$user = $this->userForCookie($cookie);
+			$user = static::userForCookie($cookie);
 			if (!$user) { break; }
 			// Confirm within COOKIE_WEEKS since last login.
 			$weeks = self::COOKIE_WEEKS;
@@ -219,11 +234,13 @@ class LoginHelper {
 	section : Saved location
 	*/
 
-	protected function stashLocation() {
+	private const SK_LOCATION = 'url-target';
+
+	protected static function stashLocation() {
 		$_SESSION[self::SK_LOCATION] = $_SERVER['REQUEST_URI'];
 	}
 
-	protected function popStashedLocation() {
+	protected static function popStashedLocation() {
 		$loc = $_SESSION[self::SK_LOCATION];
 		unset($_SESSION[self::SK_LOCATION]);
 		return ( $loc ? $loc : '/' );

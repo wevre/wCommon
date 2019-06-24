@@ -32,8 +32,7 @@ class URLComposer {
 	}
 
 	function __construct($path=null, $query=[]) {
-		$this->parts[self::PATH] = $path or
-			$this->parts[self::PATH] = getURLPath();
+		$this->parts[self::PATH] = ( $path ? $path : getURLPath() );
 		$this->parts[self::QUERY] = $query;
 		$this->parts[self::SCHEME] = '';
 		$this->parts[self::HOST] = '';

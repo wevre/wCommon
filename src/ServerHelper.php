@@ -105,4 +105,12 @@ class ServerHelper {
 		}
 	}
 
+	static function isPostAction($action) {
+		return $action == $_POST[FormBuilder::KEY_ACTION];
+	}
+
+	static function isGetAction($action) {
+		return $action == $_GET[FormBuilder::KEY_ACTION];
+	}
+
 }
