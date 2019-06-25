@@ -35,12 +35,10 @@ class LoginHelper {
 
 	public static $loginError = null;
 
-	protected $host = '';
 	protected $user = null;
 
-	function __construct($user, $host) {
+	function __construct($user) {
 		$this->user = $user;
-		$this->host = $host;
 	}
 
 	/*
@@ -66,6 +64,8 @@ class LoginHelper {
 	static function tokenForUser($user) { throw new LHException(__FUNCTION__); }
 
 	static function userForToken($token) { throw new LHException(__FUNCTION__); }
+
+	static function getHost() { throw new LHException(__FUNCTION__); }
 
 	static function cookieForUser($user, $expire) {
 		throw new LHException(__FUNCTION__);
@@ -200,14 +200,16 @@ class LoginHelper {
 		$expire = strtotime("+{$weeks} weeks");
 		$cookie = static::cookieForUser($user, $expire);
 		if (!$cookie) { return; }
-		setcookie(self::COOKIE_IDEE, $cookie, $expire, '/', $this->host, true);
+		$host = static::getHost();
+		setcookie(self::COOKIE_IDEE, $cookie, $expire, '/', $host, true);
 	}
 
-	protected function clearUserCookie() {
+	protected static function clearUserCookie() {
 		$cookie = $_COOKIE[self::COOKIE_IDEE];
 		if ($cookie) { static::deleteCookie($cookie); }
 		unset($_COOKIE[self::COOKIE_IDEE]);
-		setcookie(self::COOKIE_IDEE, '', time()-3600, '/', $this->host, true);
+		$host = static::getHost();
+		setcookie(self::COOKIE_IDEE, '', time()-3600, '/', $host, true);
 	}
 
 	// Return user previously stashed in cookie with `stashUserInCookie()`, or
