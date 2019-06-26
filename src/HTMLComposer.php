@@ -89,8 +89,8 @@ class HTMLComposer {
 		$attribString = implode(
 			' ',
 			array_key_map(
-				function ($k, $v) { return "{$k}=\"{$v}\""; },
-				array_filter($attribs)
+				array_filter($attribs),
+				function ($k, $v) { return "{$k}=\"{$v}\""; }
 			)
 		);
 		$ar_result = [

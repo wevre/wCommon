@@ -42,11 +42,14 @@ section : Site management functions
 */
 
 // Return subset of $_REQUEST filtered to $keys.
-function filterRequest($keys) {
-	//return array_intersect_key($_REQUEST, array_flip((array)$keys));
+function filterRequest($query) {
 	return array_reduce(
-		$keys,
-		function($cum, $k) { $cum[$k] = $_REQUEST[$k]; },
+		array_keys(array_filter($query)),
+		function($cum, $k) use($query) {
+			$val = $query[$k];
+			if (is_numeric($k)) { $cum[$val] = $_REQUEST[$val]; }
+			else { $cum[$k] = $val; }
+		},
 		[]
 	);
 }
@@ -60,9 +63,8 @@ function getURLPath($url=null) {
 // Set redirect location and exit. Redirect URL is constructed from $_REQUEST
 // $keys, specific $query key/val pairs, $target (which generates a fragment)
 // and $path (which defaults to getURLPath().
-function bailout($keys=[], $query=[], $target=null, $path=null) {
-	$uc = new URLComposer($query, $path);
-	$uc->filterRequest($keys);
+function bailout($query=[], $target=null, $path=null) {
+	$uc = new URLComposer($path, $query);
 	if ($target && is_object($target) && method_exists($target, 'getFragment')) {
 		$uc->parts[URLComposer::FRAGMENT] = $target->getFragment();
 	}
@@ -71,8 +73,8 @@ function bailout($keys=[], $query=[], $target=null, $path=null) {
 }
 
 // Alternate bailout for specifying non-default path.
-function bailoutPath($path=null, $keys=[], $query=[], $target=null) {
-	bailout($keys, $others, $target, $path);
+function bailoutPath($path=null, $query=[], $target=null) {
+	bailout($query, $target, $path);
 }
 
 /*
@@ -80,7 +82,7 @@ section : Array functions
 */
 
 // Map a function over key/val pairs of an array.
-function array_key_map($function, $array) {
+function array_key_map($array, $function) {
 	return array_map($function, array_keys((array)$array), (array)$array);
 }
 

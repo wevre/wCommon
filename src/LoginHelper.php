@@ -123,7 +123,7 @@ class LoginHelper {
 	}
 
 	// Clear user from session and cookie and set location header.
-	function logout($log='/login') {
+	static function logout($loc='/login') {
 		static::clearUserSession();
 		static::clearUserCookie();
 		header('Location: ' . $loc);

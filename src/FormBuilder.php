@@ -298,9 +298,8 @@ class FormBuilder {
 	* @param array $keys a list of keys that exist in $_REQUEST
 	* @uses addHiddenField()
 	*/
-	//TODO: can we get away without needing function `filterRequest` here?
 	function addHiddenKeys($keys=[]) {
-		array_key_map([ $this, 'addHiddenField' ], filterRequest($keys));
+		array_key_map(filterRequest($keys), [ $this, 'addHiddenField' ]);
 	}
 
 	/**
