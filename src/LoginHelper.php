@@ -143,7 +143,7 @@ class LoginHelper {
 		unset($_SESSION[self::SK_USER]);
 	}
 
-	protected function userFromSession() {
+	protected static function userFromSession() {
 		do try {
 			// Fetch the account from the session.
 			$token = $_SESSION[self::SK_USER];
@@ -214,16 +214,18 @@ class LoginHelper {
 
 	// Return user previously stashed in cookie with `stashUserInCookie()`, or
 	// null if non c’è.
-	protected function userFromCookie() {
+	protected static function userFromCookie() {
 		do try {
 			$cookie = $_COOKIE[self::COOKIE_IDEE];
 			if (!$cookie) { break; }
 			$user = static::userForCookie($cookie);
 			if (!$user) { break; }
 			// Confirm within COOKIE_WEEKS since last login.
+			$class = get_called_class();
+			$lh = new $class($user);
+			$loginDate = $lh->getUserLoginDate();
 			$weeks = self::COOKIE_WEEKS;
 			$cutoff = dbDate(strtotime("-{$weeks} weeks"));
-			$loginDate = $this->getUserLoginDate($user);
 			if (!$loginDate || $loginDate < $cutoff) { break; }
 			return $user;
 		} catch (Exception $e) {
