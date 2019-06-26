@@ -49,6 +49,7 @@ function filterRequest($query) {
 			$val = $query[$k];
 			if (is_numeric($k)) { $cum[$val] = $_REQUEST[$val]; }
 			else { $cum[$k] = $val; }
+			return $cum;
 		},
 		[]
 	);
