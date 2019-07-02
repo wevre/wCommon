@@ -25,7 +25,7 @@ class DateDisplayer {
 
 	function __construct($timestamp=null, $sep='&nbsp;') {
 		$this->timestamp = time();
-		if (is_string($timestamp)) { $this->timestamp = strtotime($datestring); }
+		if (is_string($timestamp)) { $this->timestamp = strtotime($timestamp); }
 		else if (is_numeric($timestamp)) { $this->timestamp = $timestamp; }
 		$this->sep = $sep;
 	}
@@ -34,7 +34,7 @@ class DateDisplayer {
 	// Return date formatted as "7:45 <span class="ampm">pm</span> Mon 3 Apr
 	// 1996".
 	function getTimeDateDisplay() {
-		return getTimeDisplay() . ' ' . getDateDisplay();
+		return $this->getTimeDisplay() . ' ' . $this->getDateDisplay();
 	}
 
 	// Return time formatted with small caps am/pm, no minutes if ':00', and

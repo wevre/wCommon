@@ -149,7 +149,7 @@ class FormBuilder {
 	static function cleanValue($value, $flags=array()) {
 		$value = trim($value) or $value = null; // we don't want empty string, change it to null
 		if (in_array(self::NO_SPEC_CHARS, $flags) && $value!=urlencode($value)) { return array(null, 'No special characters or spaces'); }
-		if (in_array(self::MUST_EXIST, $flags) && !$value) { return array(null, "Can't be blank"); }
+		if (in_array(self::MUST_EXIST, $flags) && !$value) { return array(null, "Can’t be blank"); }
 		if (in_array(self::LOWER_CASE, $flags) || in_array(self::FILTER_EMAIL, $flags)) { $value = strtolower($value); }
 		if (in_array(self::ENCODE_HTML, $flags)) { $value = htmlspecialchars($value); }
 		if (in_array(self::STRIP_ALL_TAGS, $flags)) { $value = strip_tags($value); }

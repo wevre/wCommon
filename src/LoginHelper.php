@@ -174,15 +174,17 @@ class LoginHelper {
 		$prior = $_SESSION[self::SK_LAST_LOGIN_DATE];
 		if (!$prior) { return; }
 		unset($_SESSION[self::SK_LAST_LOGIN_DATE]);
+		$dd = new DateDisplayer($prior);
 		call_user_func(
 			[ static::CLS_TEMPLATE, 'addConfirmMessage' ],
-			'You last logged in ' . getDateAndIntervalDisplay($prior) . '.'
+			'You last logged in ' . $dd->getDateAndIntervalDisplay() . '.'
 		);
 	}
 
 	protected function resetLoginDate() {
 		$_SESSION[self::SK_LAST_LOGIN_DATE] = $this->getUserLoginDate();
-		$this->setUserLoginDate(dbDate());
+		$dt = (new DateDisplayer())->dbDate();
+		$this->setUserLoginDate($dt);
 	}
 
 	/*
@@ -193,12 +195,12 @@ class LoginHelper {
 	//could have a "remember me on this device" checkbox.
 	static function doNotTrack() { return false; }
 
-	function stashUserInCookie($user) {
+	function stashUserInCookie() {
 		if (self::doNotTrack()) { return; }
 		if ($_COOKIE[self::COOKIE_IDEE]) { return; }
 		$weeks = self::COOKIE_WEEKS;
 		$expire = strtotime("+{$weeks} weeks");
-		$cookie = static::cookieForUser($user, $expire);
+		$cookie = static::cookieForUser($this->user, $expire);
 		if (!$cookie) { return; }
 		$host = static::getHost();
 		setcookie(self::COOKIE_IDEE, $cookie, $expire, '/', $host, true);
@@ -225,7 +227,7 @@ class LoginHelper {
 			$lh = new $class($user);
 			$loginDate = $lh->getUserLoginDate();
 			$weeks = self::COOKIE_WEEKS;
-			$cutoff = dbDate(strtotime("-{$weeks} weeks"));
+			$cutoff = (new DateDisplayer("-{$weeks} weeks"))->dbDate();
 			if (!$loginDate || $loginDate < $cutoff) { break; }
 			return $user;
 		} catch (Exception $e) {
