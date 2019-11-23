@@ -2,6 +2,9 @@ project : wCommon ToDo
 	author : Mike Weaver
 	created : 2015-02-13
 
+[] (2019-07-02) : Static calls
+	Should `call_user_func` be replaced with `forward_static_call`?
+
 [] (2019-06-07) : Calls to standard functions
 	What happens when we call functions like `prefixIfCe` or `array_key_map` or
 	`getHost` in a client like DAC or BYT. If those have been overridden in their
