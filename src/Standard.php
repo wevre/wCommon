@@ -63,7 +63,7 @@ function getURLPath($url=null) {
 function confirmServer() {
 	$domain = $GLOBALS[g_SUBDOMAIN];
 	$hostname = $GLOBALS[g_HOSTNAME];
-	if (!$_SERVER['HTTPS'] || 0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: https://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
+	if (0!==strpos($_SERVER['SERVER_NAME'], $domain)) { header("Location: https://{$domain}.{$hostname}{$_SERVER['REQUEST_URI']}"); }
 }
 
 // Indicates if subdomain begins with 'stage'.
