@@ -19,7 +19,7 @@
 		"source": "https://github.com/wevrem/wCommon"
 	},
 	"require": {
-		"wevrem/dStruct": "^1.1",
+		"wevrem/dstruct": "^1.1",
 		"pear/mail": "^1.4",
 		"pear/net_smtp": "^1.7",
 		"pear/auth_sasl": "^1.1",
